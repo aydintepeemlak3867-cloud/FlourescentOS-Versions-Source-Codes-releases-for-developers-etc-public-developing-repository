@@ -1,0 +1,2 @@
+# FlourescentOS-Versions-Source-Codes-releases-for-developers-etc-public-developing-repository
+Here is my all operating systems projects writed via python Now You Can download stock (writed by myself) operating systems or take the Core attach some more features and GUI s etc even you can name it yorself but(dont forget it is LGPL+MIT licensed it means you should credit to us example Noah's FlourescentOS/6 port) it is LGPL+MIT Now see you ltr
