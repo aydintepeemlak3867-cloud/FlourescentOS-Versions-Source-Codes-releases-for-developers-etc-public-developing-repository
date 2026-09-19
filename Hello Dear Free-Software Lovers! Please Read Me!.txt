@@ -1,0 +1,632 @@
+Hello Dear Free-Software Lovers!
+
+How are y'all today today I commit My operating System
+
+We are SPM team also known as few turkish children's Project team 
+
+We Have A lot of projects Roberta Stream Team, SPSCT MC60 CPU s 
+
+But We'll talk abot the main software 
+
+It's called FlourescentOS
+Actually it writed via python it means python cant work low level like a C code(damn it) But our Project peripherals supports CPython very native beacause Motherboard has a Python Intrepreter means it working
+Today We open a Repository I upload stock Flourescent Systems to there and It is Now LGPL+MIT licensed it means you can download stock versions use it or open its source codes add new features even write your own OS based on FlourescentOS s core ANOE(Authentic North Operator Environment) basically it is FlourescentOS's kernel but it is super useful super modular even you can add a kernel level module example someone called Noah Noah Wants make his own software but Noah Learns FlourescentOS someone called Lia they want develop something based on FlourescentOS for ESP32 controllers they add a UI UX other operating system terms etc. they name it Noah's FlourescentOS4ESP and someone on the net called Igor saw a malfunctioning code wrote to Noah "Hi Noah I saw a malfunctioning code on your code I write a alternative code for it can you accept it" and noah says yes and adds it code Works but there are some rules on this repository here
+
+1# Do Not be a bad coder OR if you see a bad coder REPORT IT INSTANTLY WITHOUT TRUST DONT CHAT OR INTERACT WITH HIM/HER
+def badcoder()
+Bad coders are toxic idiots wants to be basically malfunctioning everyone s code if anyone wants to commit a code to you detect the code writer writers Web Past etc if it is ==badcoder ban it instantly from repository 
+criticize bad coders
+If his/her web past says it had made a bad code or toxicness
+system.ban
+always come closer to everyone with ZERO TRUST and if you suspicied about him/her REPORT IT I SAY AGAIN REPORT IT
+
+2# limited AI coding
+def slop_codes()
+As we're SPM team we dont want any slop codes on our(#include you)(we'all hate brainrot IDIOTS here unless you are gen beta/ipad kid) or you can make a code with AI but you should deeply test every function on the code on a local Flourescent Copy at VSCODE(If your FlourescentOS copy before 5 you can use thonny but if you use FlourescentOS/5+ on thonny it flops or slows down as bad as working Windows 11 on a 30 year old Windows 3.1 last supported PC shortly use VSCODE it is easy but first it is hard (unless you re learn pip(Python Intrepreter) install library_name command) if it Works you can send the code to us and if we commit you can contributed to "OUR" code
+
+#3 Zero Trust to anyone on forum
+def zero_trust()
+actually I mean to firstly unless it's your friend do not trust anyone on forum except SPM Team suspicious about everything before contributing anything you should be GOTO a FlourescentOS4Developers local copy of it usually it is more unstable than normal full frame releases beacause github repository developers files are editable by everyone and six seperate folders on here
+
+#1 Full Releases(read/download only codes local copies)
+#2 developers releases(editable/contributable by everyone)
+#3 custom Flourescent Systems(everyone can upload their own flourescentOS copy here and sub folders are seperated vis GUI editions or CLI versions(you sure about it CLI versions way way way harder than GUI editioned releases do not try CLI unless you strip the OS until its core)
+#4Beta Systems or Launch Aborted Systems(very bad area actually do not pass its thoughts on your mind about go into this folders beacause you know messed up stuff unproceeded contributions basically a trash pit)
+#5 SP(Super Power) devices parts etc official circuits/PCB schematics (even you can make your SP device upload it FlourescentOS and use it like normal)
+#6 Other SPM Project Softwares (Mel AI HOPAC_DOS DENEYAP_DOS(f*ck deneyap Institutes they still not paid OUR pricings using it still pirated etc.)
+
+we will add some more projects aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd(drum noisies) more updates
+
+We Know we have lots of projects maybe some of them flops maybe some of it gains a niche popularity we have not a target like beating big companies but we believe we will be a very big things on Free-SoftWare Lover's Hearts ;
+
+
+
+
+We Love Y'all
+
+Uploaded By SPM Team 19/09/2026 22:35 Istanbul/Republic Of Turkey
+
+
+Deutsch Version
+
+Hallo liebe Freie-Software-Liebhaber!
+Wie geht's euch heute, heute commite ich mein Betriebssystem
+
+Wir sind das SPM-Team, auch bekannt als das Projektteam ein paar türkischer Kids
+Wir haben eine Menge Projekte: Roberta Stream Team, SPSCT MC60 CPUs
+Aber wir sprechen über die Hauptsoftware
+
+Sie heißt FlourescentOS
+Eigentlich ist sie in Python geschrieben, was bedeutet, dass Python nicht so low-level wie C arbeiten kann (verdammt noch mal). Aber unsere Peripheriegeräte unterstützen CPython sehr nativ, weil das Motherboard einen Python-Interpreter hat, was bedeutet, dass es funktioniert.
+Heute eröffnen wir ein Repository, ich lade die Standard-Flourescent-Systeme hoch und es ist jetzt LGPL+MIT-lizenziert, das bedeutet, du kannst Standardversionen herunterladen, sie nutzen oder ihre Quellcodes öffnen, neue fonctionnalités hinzufügen oder sogar dein eigenes OS basierend auf dem FlourescentOS-Kern ANOE (Authentic North Operator Environment) schreiben. Im Grunde ist es der Kernel von FlourescentOS, aber er ist super nützlich, super modular. Du kannst sogar ein Modul auf Kernel-Ebene hinzufügen: Beispiel: Jemand namens Noah. Noah möchte seine eigene Software machen, aber Noah lernt FlourescentOS. Jemand namens Lia möchte etwas basierend auf FlourescentOS für ESP32-Controller entwickeln, sie fügen eine UI/UX und andere Betriebssystem-Terminologien hinzu usw. Sie nennen es Noah's FlourescentOS4ESP. Und jemand im Netz namens Igor sah einen fehlerhaften Code und schrieb an Noah: "Hi Noah, ich habe einen fehlerhaften Code in deinem Code gesehen, ich habe einen alternativen Code dafür geschrieben, kannst du ihn akzeptieren?". Und Noah sagt ja und fügt ihn hinzu, der Code funktioniert! Aber es gibt einige Regeln für dieses Repository hier:
+
+1# Sei kein schlechter Coder ODER wenn du einen schlechten Coder siehst, MELDES SOFORT OHNE VERTRAUEN, SCHATZE NICHT MIT IHM / IHM SPIELEN ODER INTERAGIEREN
+def badcoder()
+Schlechte Coder sind toxische Idioten, die im Grunde den Code aller anderen beschädigen wollen. Wenn dir jemand einen Code committen will, erkenne den Code-Autor anhand von Web-Past usw., wenn er ==badcoder ist, banne ihn sofort aus dem Repository
+Kritisiere schlechte Coder
+Wenn seine Web-Vergangenheit besagt, dass er schlechten Code oder Toxizität gemacht hat
+system.ban
+Gehe immer mit NULL VERTRAUEN auf jeden zu und wenn du den Verdacht hast MELDEN ICH SAGE NOCH EINMAL MELDEN
+
+2# Begrenztes KI-Coding
+def slop_codes()
+Da wir das SPM-Team sind, wollen wir keine Schand-Codes (Slop-Codes) bei uns (#include you) (wir hassen alle Brainrot-IDIDOTS hier, es sei denn, du bist Gen Beta / iPad Kid). Oder du kannst Code mit KI machen, aber du solltest jede Funktion im Code auf einer lokalen Flourescent-Kopie in VSCODE tiefgehend testen (wenn deine FlourescentOS-Kopie vor Version 5 liegt, kannst du Thonny verwenden, aber wenn du FlourescentOS/5+ auf Thonny verwendest, stürzt es ab oder verlangsamt sich so schlimm wie Windows 11 auf einem 30 Jahre alten Windows 3.1 PC). Kurz gesagt: Verwende VSCODE, es ist einfach, aber anfangs schwer (es sei denn, du lernst den pip (Python Interpreter) install library_name Befehl). Wenn es funktioniert, kannst du uns den Code schicken, und wenn wir committen, hast du zu „UNSEREM“ Code beigetragen.
+
+#3 Null Vertrauen zu irgendjemandem im Forum
+def zero_trust()
+Eigentlich meine ich erstens: Vertraue niemandem im Forum außer dem SPM-Team, es sei denn, es ist dein Freund. Sei misstrauisch gegenüber allem. Bevor du etwas beisteuerst, solltest du zu einer lokalen Kopie von FlourescentOS4Developers gehen – diese ist normalerweise instabiler als normale Full-Frame-Releases, da die Entwicklerdateien des GitHub-Repositories von jedem bearbeitet werden können und es hier sechs getrennte Ordner gibt:
+
+#1 Full Releases (Nur Lesen/Herunterladen von Codes lokaler Kopien)
+#2 Developer Releases (Von jedem bearbeitbar/beisteuerbar)
+#3 Custom Flourescent Systems (Jeder kann seine eigene FlourescentOS-Kopie hier hochladen, und Unterordner sind nach GUI-Editionen oder CLI-Versionen getrennt – sicher ist, CLI-Versionen sind viel, viel schwieriger als GUI-Editionen, versuche kein CLI, es sei denn, du entkernst das OS bis auf seinen Kern)
+#4 Beta Systems or Launch Aborted Systems (Sehr schlechter Bereich, verschwende keine Gedanken daran, diese Ordner zu betreten, denn du weißt schon: durcheinandergebrachtes Zeug, nicht fortgeführte Beiträge, im Grunde eine Müllkippe)
+#5 SP (Super Power) Geräte-Teile usw. offizielle Schaltkreise/PCB-Schaltpläne (sogar du kannst dein SP-Gerät bauen, FlourescentOS darauf hochladen und es wie gewohnt nutzen)
+#6 Andere SPM-Projekt-Softwares (Mel AI, HOPAC_DOS, DENEYAP_DOS (f*ck die Deneyap-Institute, sie haben unsere Preise immer noch nicht bezahlt, nutzen es immer noch piratiert etc.))
+
+Wir werden noch einige weitere Projekte hhhhiiiiiiiiiiiiiiiiiiiiiiinnnnnnnnnnnnnnnnnnnnnnnnnnuuuuuuuuuuuuuuuuufügen aaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd weitere Updates!
+
+Wir wissen, dass wir viele Projekte haben, vielleicht floppen einige von ihnen, vielleicht gewinnen einige davon eine Nischen-Popularität. Wir haben nicht das Ziel, große Unternehmen zu schlagen, aber wir glauben, dass wir eine sehr große Sache in den Herzen von Freie-Software-Liebhabern sein werden;
+
+Wir lieben euch alle!
+
+Hochgeladen vom SPM-Team am 19.09.2026 22:35 Istanbul / Republik Türkei
+
+
+(Русский)
+Привет, дорогие любители свободного ПО!
+Как вы все сегодня, сегодня я коммичу свою операционную систему
+
+Мы — команда SPM, также известная как проектная команда нескольких турецких детей
+У нас много проектов: Roberta Stream Team, SPSCT MC60 CPU и т.д.
+Но мы поговорим об основном софте
+
+Он называется FlourescentOS
+Вообще он написан на питоне, а это значит, что питон не может работать на низком уровне, как код на C (черт возьми!). Но наши аппаратные периферийные устройства очень нативно поддерживают CPython, потому что на материнской плате есть интерпретатор Python, а значит, он работает.
+Сегодня мы открываем репозиторий, я загружаю туда стандартные системы Flourescent, и теперь он лицензирован под лицензиями LGPL+MIT, что означает, что вы можете скачивать стандартные версии, использовать их или открывать их исходные коды, добавлять новые функции и даже писать свою собственную ОС на базе ядра FlourescentOS ANOE (Authentic North Operator Environment). В основном это ядро FlourescentOS, но оно супер полезное и супер модульное, вы даже можете добавить модуль на уровне ядра. Пример: некий Ноа. Ноа хочет сделать свой собственный софт, но Ноа учит FlourescentOS. Кто-то по имени Лия хочет разработать что-то на базе FlourescentOS для контроллеров ESP32, они добавляют UI/UX и другие термины операционных систем и т.д., и называют это Noah's FlourescentOS4ESP. И некий парень по сети по имени Игорь увидел багованный код и написал Ноа: «Привет, Ноа, я увидел багованный код у тебя, я написал альтернативный код для него, можешь ли ты его принять?». И Ноа говорит «да» и добавляет его, код работает! Но в этом репозитории есть правила:
+
+1# Не будь плодым кодером ИЛИ если ты видишь плохого кодера, ДОНОСИ НА НЕГО НЕМЕДЛЕННО С НУЛЕВЫМ ДОВЕРИЕМ, НЕ ОБЩАЙСЯ И НЕ ВЗАИМОДЕЙСТВУЙ С НИМ/НЕЙ
+def badcoder()
+Плохие кодеры — это токсичные идиоты, которые по сути хотят ломать всем код. Если кто-то хочет сделать коммит в ваш код, проверяйте автора кода (Web Past и т.д.), если он ==badcoder, баньте его немедленно из репозитория
+Критикуйте плохих кодеров
+Если его/ее веб-прошлое говорит о том, что он писал плохой код или токсичность
+system.ban
+Всегда подходите ко всем с НУЛЕВЫМ ДОВЕРИЕМ и если вы подозреваете его/ее, СООБЩИТЕ, ЕЩЕ РАЗ ПОВТОРЯЮ, СООБЩИТЕ
+
+2# Ограниченное написание кода с помощью ИИ
+def slop_codes()
+Поскольку мы команда SPM, мы не хотим никаких мусорных кодов у нас (#include you) (мы все ненавидим здесь мозговые идиоты, если только вы не поколение бета / iPad kid). Или вы можете писать код с помощью ИИ, но вы должны глубоко протестировать каждую функцию кода на локальной копии Flourescent в VSCODE (если ваша копия FlourescentOS старее версии 5, вы можете использовать Thonny, но если вы используете FlourescentOS/5+ на Thonny, она лагает или замедляется так же сильно, как работа Windows 11 на 30-летнем ПК с Windows 3.1). Короче говоря: используйте VSCODE, это легко, но сначала сложно (если вы не выучите команду pip (Python Interpreter) install library_name). Если это работает, вы можете отправить код нам, и если мы сделаем коммит, вы внесли свой вклад в «НАШ» код.
+
+#3 Нулевое доверие к кому-либо на форуме
+def zero_trust()
+На самом деле я имею в виду во-первых: если это не твой друг, не доверяй никому на форуме, кроме команды SPM. Подозревай всё. Перед тем как что-то контрибьютить, вам следует перейти к локальной копии FlourescentOS4Developers — обычно она более нестабильна, чем обычные полные релизы, потому что файлы разработчиков в репозитории GitHub редактируются кем угодно, и здесь есть шесть отдельных папок:
+
+#1 Full Releases (только чтение/скачивание кодов локальных копий)
+#2 Developer Releases (редактируемые/доступные для контрибьюта всеми)
+#3 Custom Flourescent Systems (каждый может загрузить сюда свою собственную копию FlourescentOS, и подпапки разделены по GUI-версиям или CLI-версиям — поверьте, CLI-версии намного, намного сложнее GUI-версий, не пытайтесь использовать CLI, если вы не ободрали ОС до самого ядра)
+#4 Beta Systems or Launch Aborted Systems (очень плохая зона, даже не думайте заходить в эти папки, потому что вы знаете: бардак, незавершенные контрибьюты, по сути помойка)
+#5 Детали устройств SP (Super Power) и т.д., официальные схемы / схемы печатных плат (даже вы можете собрать свое устройство SP, загрузить на него FlourescentOS и использовать как обычно)
+#6 Другие программы проектов SPM (Mel AI, HOPAC_DOS, DENEYAP_DOS (ф*к институты Deneyap, они до сих пор не заплатили НАШИ цены, используют ее пиратскую и т.д.))
+
+Мы добавим еще проектов ааааааааааааааааааааааааааааааааааааааааааааанннннннннннннннннннннннннннннннннннннннннннннннннндсссссссссссссссссссссссссссссссссссссссссссссс и еще обновлений!
+
+Мы знаем, что у нас много проектов, возможно, некоторые из них провалятся, возможно, некоторые обретут нишевую популярность. У нас нет цели победить крупные компании, но мы верим, что мы станем очень большой вещью в сердцах любителей свободного ПО;
+
+Мы любим вас всех!
+
+Загружено командой SPM 19.09.2026 22:35 Стамбул / Турецкая Республика
+
+
+(Türkçe)
+Sevgili Özgür Yazılım Sevenler Merhaba!
+
+Nasılsınız millet, bugün İşletim Sistemimi yüklüyorum (commit ediyorum)
+
+Biz SPM ekosistemiyiz, nam-ı diğer birkaç Türk çocuğunun proje takımı
+Bir sürü projemiz var: Roberta Stream Team, SPSCT MC60 CPU'lar
+Ama ana yazılımdan bahsedeceğiz
+
+Adı FlourescentOS
+Aslında Python ile yazıldı, bu da Python'ın C kodu gibi düşük seviyeli çalışamayacağı anlamına geliyor (kahretsin). Ancak çevre birimlerimiz CPython'ı çok yerli (native) destekliyor çünkü Anakart'ta bir Python Yorumlayıcısı var, yani çalışıyor.
+Bugün bir Depo (Repository) açıyoruz, stok Flourescent Sistemlerini oraya yüklüyorum ve artık LGPL+MIT lisanslı. Yani stok sürümleri indirebilir, kullanabilir, kaynak kodlarını açabilir, yeni özellikler ekleyebilir ve hatta FlourescentOS'un çekirdeği ANOE'yi (Authentic North Operator Environment) temel alarak kendi işletim sisteminizi yazabilirsiniz. Temelde FlourescentOS'un çekirdeğidir ancak süper faydalı, süper modülerdir. Hatta çekirdek seviyesinde bir modül bile ekleyebilirsiniz; örneğin Noah adında biri olsun. Noah kendi yazılımını yapmak istiyor ama FlourescentOS öğreniyor. Lia adında biri ESP32 denetleyicileri için FlourescentOS tabanlı bir şey geliştirmek istiyor, UI/UX ve diğer işletim sistemi terimlerini falan ekliyorlar ve adını Noah's FlourescentOS4ESP koyuyorlar. Ve nette Igor adında biri hatalı bir kod görüp Noah'a yazıyor: "Selam Noah, kodunda hatalı bir kod gördüm, bunun için alternatif bir kod yazdım, kabul edebilir misin?" ve Noah evet diyor, ekliyor ve kod çalışıyor! Ancak bu depoda bazı kurallar var:
+
+1# Kötü bir kod yazarı OLMAYIN VEYA kötü bir kod yazarı görürseniz GÜVENMEDEN ANINDA RAPOR EDİN, SOHBET ETMEYİN VEYA ETKİLEŞİME GİRMEYİN
+def badcoder()
+Kötü kod yazarları, herkesin kodunu bozmak isteyen toksik idiotlardır. Eğer biri size kod commit etmek isterse, kod yazarının Web Geçmişini (Web Past) vb. tespit edin, eğer ==badcoder ise depodan anında banlayın
+Kötü kod yazarlarını eleştirin
+Eğer web geçmişi kötü kod yaptığını veya toksisite içerdiğini söylüyorsa
+system.ban
+Herkese HER ZAMAN SIFIR GÜVEN ile yaklaşın ve ondan şüphelenirseniz RAPOR EDİN, TEKRAR SÖYLÜYORUM RAPOR EDİN
+
+2# Sınırlı Yapay Zeka kodlaması
+def slop_codes()
+SPM ekibi olarak aramızda herhangi bir çöp/slop kod istemiyoruz (#include you) (buradaki beyin çürümesi İDİOTLARININ hepsinden nefret ediyoruz, eğer Gen Beta / iPad çocuğu değilseniz). Ya da AI ile kod yapabilirsiniz ancak koddaki her fonksiyonu VSCODE üzerinde yerel bir Flourescent Kopyasında derinlemesine test etmelisiniz (Eğer FlourescentOS kopyanız 5'ten eskiyse Thonny kullanabilirsiniz ancak FlourescentOS/5+ sürümünü Thonny üzerinde kullanırsanız, 30 yıllık Windows 3.1 destekli son PC'de Windows 11 çalıştırmak kadar berbat şekilde kasar veya çöker). Kısacası VSCODE kullanın, kolaydır ama ilk başta zordur (pip (Python Interpreter) install library_name komutunu öğrenmediğiniz sürece). Eğer çalışırsa kodu bize gönderebilirsiniz ve eğer commit edersek "BİZİM" kodumuza katkıda bulunmuş olursunuz.
+
+#3 Forumdaki herkese Sıfır Güven
+def zero_trust()
+Aslında demek istediğim şu ki; arkadaşınız olmadıkça SPM Ekibi dışında forumdaki kimseye güvenmeyin, her şeyden şüphe edin. Herhangi bir katkıda bulunmadan önce FlourescentOS4Developers'ın yerel bir kopyasına GİTMELİSİNİZ. Burası genellikle normal tam sürüm yayınlarından daha kararsızdır çünkü GitHub deposu geliştirici dosyaları herkes tarafından düzenlenebilir ve burada altı ayrı klasör vardır:
+
+#1 Full Releases (Sadece oku/indir kodların yerel kopyaları)
+#2 developers releases (Herkes tarafından düzenlenebilir/katkı sunulabilir)
+#3 custom Flourescent Systems (Herkes kendi FlourescentOS kopyasını buraya yükleyebilir ve alt klasörler GUI sürümleri veya CLI sürümleri olarak ayrılmıştır —emin olun CLI sürümleri GUI sürümlerinden çok ama çok daha zordur, işletim sistemini çekirdeğine kadar soyup soğana çevirmediğiniz sürece CLI denemeyin)
+#4 Beta Systems or Launch Aborted Systems (Çok kötü bir alan, aslında bu klasörlere girmeyi aklınızdan bile geçirmeyin çünkü bildiğiniz karmakarışık şeyler, devam ettirilmemiş katkılar, kısmen bir çöp çukuru)
+#5 SP (Super Power) cihaz parçaları vb. resmi devreler / PCB şemaları (Kendi SP cihazınızı bile yapıp üzerine FlourescentOS yükleyebilir ve normal şekilde kullanabilirsiniz)
+#6 Diğer SPM Proje Yazılımları (Mel AI, HOPAC_DOS, DENEYAP_DOS (amk Deneyap Enstitüleri hâlâ HAK ETTİĞİMİZ ücretleri ödemediler, hâlâ korsan kullanıyorlar))
+
+Daha fazla proje ekleyeceğiz aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd ve daha fazla güncelleme!
+
+Biliyoruz ki bir sürü projemiz var, belki bazıları tutmayacak, belki bazıları niş bir popülarite kazanacak. Büyük şirketleri yenmek gibi bir hedefimiz yok ama Özgür Yazılım Sevenlerin kalbinde çok büyük bir şey olacağımıza inanıyoruz;
+
+Hepinizi seviyoruz!
+
+SPM Ekibi Tarafından Yüklendi 19/09/2026 22:35 İstanbul / Türkiye Cumhuriyeti
+
+
+(日本語)
+親愛なるフリーソフトウェア愛好家の皆さん、こんにちは！
+
+みんな元気かい？今日は俺のオペレーティングシステムをコミットするよ
+
+俺たちはSPMチーム、別名「数人のトルコの子供たちのプロジェクトチーム」だ
+ロベータ・ストリーム・チームやSPSCT MC60 CPUなど、たくさんのプロジェクトを持っている
+だが、メインのソフトウェアについて話そう
+
+名前は「FlourescentOS」
+実はPythonで書かれている。つまり、C言語みたいに低レベルな処理がPythonにはできない（クソッ！）。だが、マザーボードにPythonインタプリタが搭載されているおかげで、俺たちのプロジェクトの周辺機器はCPythonを非常にネイティブにサポートしているから動くんだ。
+今日、リポジトリをオープンした。そこに標準のFlourescentシステムをアップロードしたよ。現在はLGPL+MITライセンスだ。つまり、標準バージョンをダウンロードして使ったり、ソースコードを開いて新機能を追加したり、FlourescentOSのコアであるANOE（Authentic North Operator Environment）をベースに自分だけのOSを作ったりできる。基本的にこれはFlourescentOSのカーネルなんだけど、超便利で超モジュール式なんだ。カーネルレベルのモジュールを追加することもできる。例えば、ノアという奴がいたとする。ノアは自分のソフトウェアを作りたいんだけど、FlourescentOSを学んでいる。リアという奴はESP32コントローラー向けにFlourescentOSをベースにしたものを開発したいと考えていて、UI/UXやその他のOS用語などを追加して「Noah's FlourescentOS4ESP」と名付けた。そしてネット上のイーゴリという奴がバグったコードを見つけてノアにこう書いた。「やあノア、君のコードにバグったコードを見つけたんだ。代替コードを書いたんだけど受け入れてくれないか？」ノアは「いいよ」と言ってそれを追加し、コードは動いた！だが、このリポジトリにはいくつかルールがある：
+
+1# クソなコーダーになるな、あるいはクソなコーダーを見つけたら、絶対に信用せず即座に報告しろ！チャットや関わりを持つな！
+def badcoder()
+クソなコーダーとは、基本的にみんなのコードをバグらせたがる有害なバカどもだ。もし誰かが君にコードをコミットしたいと言ってきたら、そのコーダーのWebの過去（Web Past）などを検出しろ。もし ==badcoder なら、即座にリポジトリからBANしろ
+クソなコーダーを批判しろ
+もしそいつのWebの過去にクソコードや有害性があると書かれていれば
+system.ban
+常にすべての人に「ゼロトラスト（全く信用しない）」で近づけ。そいつを疑うなら報告しろ、もう一度言う、報告しろ！
+
+2# 制限されたAIコーディング
+def slop_codes()
+俺たちはSPMチームだから、スロップコード（質の低いAI生成コード）は一切お断りだ（#include you）（ここでは脳死したアイツらは全員大嫌いだ。ジェネレーションベータやiPadキッズじゃない限りな）。もちろんAIを使ってコードを作ることもできるが、コードのすべての関数をVSCODE上のローカルなFlourescentコピーで徹底的にテストしなければならない（もし君のFlourescentOSコピーがバージョン5未満ならThonnyを使ってもいいが、FlourescentOS/5以降でThonnyを使うと、30年前のWindows 3.1最終対応PCでWindows 11を動かすくらい激重になったりフリーズしたりする）。要するにVSCODEを使え。簡単だが最初は難しい（pip (Python Interpreter) install library_name コマンドを学ぶまではね）。もし動くなら俺たちにコードを送ってくれ。コミットされれば、君は「俺たち」のコードに貢献したことになる。
+
+#3 フォーラム上の誰に対してもゼロトラスト
+def zero_trust()
+実際どういうことかと言うと、まず第一に、友達でもない限りSPMチーム以外のフォーラムの人間は誰も信じるな。すべてを疑え。何かをコントリビュートする前に、FlourescentOS4DevelopersのローカルコピーにGOTO（移動）するべきだ。通常、GitHubリポジトリの開発者ファイルは誰でも編集できるため、通常のフルフレームリリースよりも不安定であり、ここには6つの独立したフォルダがある：
+
+#1 Full Releases（読み取り/ダウンロード専用のコードのローカルコピー）
+#2 developer releases（誰でも編集・コントリビュート可能）
+#3 custom Flourescent Systems（誰もが自分のFlourescentOSコピーをここにアップロードできる。サブフォルダはGUI版またはCLI版に分かれている。――断言するが、CLI版はGUI版よりも何倍も何倍も難しい。OSをコアまで剥ぎ取っていない限り、CLI版には手を出すな）
+#4 Beta Systems or Launch Aborted Systems（最悪のエリア。実はこのフォルダに立ち入ることすら考えるな。知ってのとおり、めちゃくちゃな代物や、放置されたコントリビューションのゴミ捨て場だ）
+#5 SP（スーパーパワー）デバイスのパーツ等の公式回路図 / PCB回路図（君自身でSPデバイスを作り、FlourescentOSをアップロードして通常通り使うことすらできる）
+#6 その他のSPMプロジェクトソフトウェア（Mel AI、HOPAC_DOS、DENEYAP_DOS（くそったれデネヤプ機関、あいつらは未だに俺たちの価格を払わず、相変わらず海賊版を使っている等））
+
+さらにいくつかのプロジェクトを追加するぞ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd さらなるアップデートも！
+
+俺たちにはたくさんのプロジェクトがある。いくつかはフロップ（失敗）するかもしれないし、いくつかのニッチな人気を獲得するかもしれない。大企業を倒すような目標はないけれど、フリーソフトウェア愛好家の心の中で非常に大きな存在になると信じている；
+
+みんな愛してるぜ！元気、ソニー！？」
+
+SPMチームによりアップロード 2026/09/22:35 イスタンブール / トルコ共和国
+
+(Español)
+¡Hola, queridos amantes del software libre!
+
+¿Cómo están todos hoy? Hoy hago commit de mi Sistema Operativo
+
+Somos el equipo SPM, también conocido como el equipo de proyectos de unos cuantos niños turcos
+Tenemos un montón de proyectos: Roberta Stream Team, SPSCT MC60 CPUs
+Pero hablaremos del software principal
+
+Se llama FlourescentOS
+En realidad está escrito en python, lo que significa que python no puede funcionar a bajo nivel como el código C (¡maldición!). Pero nuestros periféricos de proyecto soportan CPython de forma muy nativa porque la placa madre tiene un Intérprete de Python, lo que significa que funciona.
+Hoy abrimos un repositorio, subo los sistemas Flourescent de stock allí y ahora tiene licencia LGPL+MIT, lo que significa que puedes descargar versiones de stock, usarlas o abrir sus códigos fuente, añadir nuevas funciones o incluso escribir tu propio SO basado en el núcleo de FlourescentOS ANOE (Authentic North Operator Environment), básicamente es el núcleo de FlourescentOS pero es súper útil, súper modular, incluso puedes añadir un módulo a nivel de núcleo. Ejemplo: alguien llamado Noah. Noah quiere hacer su propio software pero Noah aprende FlourescentOS. Alguien llamado Lia quiere desarrollar algo basado en FlourescentOS para controladores ESP32, añaden una interfaz UI/UX y otros términos de sistemas operativos, etc. Lo llaman Noah's FlourescentOS4ESP. Y alguien en la red llamado Igor vio un código con fallos y le escribió a Noah: "Hola Noah, vi un código con fallos en tu código, escribí un código alternativo para él, ¿puedes aceptarlo?". Y Noah dice que sí y lo añade, ¡el código funciona! Pero hay algunas reglas en este repositorio:
+
+1# No seas un mal codificador O si ves a un mal codificador, REPÓRTALO AL INSTANTE SIN CONFIANZA, NO CHATEES NI INTERACTÚES CON ÉL/ELLA
+def badcoder()
+Los malos codificadores son idiotas tóxicos que básicamente quieren arruinar el código de todos. Si alguien quiere hacer un commit de código hacia ti, detecta el historial web (Web Past) del autor del código, etc., si es ==badcoder, baneo instantáneo del repositorio
+Critica a los malos codificadores
+Si su pasado web dice que ha hecho mal código o toxicidad
+system.ban
+Acércate siempre a todos con CONFIANZA CERO y si sospechas de él/ella, REPÓRTALO, LO DIGO OTRA VEZ, REPÓRTALO
+
+2# Codificación limitada por IA
+def slop_codes()
+Como somos el equipo SPM, no queremos ningún código basura (slop codes) en el nuestro (#include you) (aquí odiamos a todos los IDIOTAS con el cerebro podrido a menos que seas de la generación beta / niño de iPad). O puedes hacer código con IA, pero debes probar profundamente cada función del código en una copia local de Flourescent en VSCODE (si tu copia de FlourescentOS es anterior a la 5 puedes usar Thonny, pero si usas FlourescentOS/5+ en Thonny, falla o se vuelve tan lento como ejecutar Windows 11 en un PC de hace 30 años con soporte para Windows 3.1). En resumen: usa VSCODE, es fácil pero al principio es difícil (a menos que aprendas el comando pip (Python Interpreter) install library_name). Si funciona, puedes enviarnos el código y si hacemos commit, habrás contribuido a " NUESTRO" código.
+
+#3 Confianza cero hacia cualquiera en el foro
+def zero_trust()
+En realidad me refiero a lo primero: a menos que sea tu amigo, no confíes en nadie en el foro excepto en el equipo SPM. Sé sospechoso de todo. Antes de contribuir con algo, DEBES IR (GOTO) a una copia local de FlourescentOS4Developers, por lo general es más inestable que las versiones normales de marco completo porque los archivos de los desarrolladores del repositorio de github son editables por cualquiera y hay seis carpetas separadas aquí:
+
+#1 Full Releases (copias locales de códigos solo para leer/descargar)
+#2 developers releases (editables/contribuibles por cualquiera)
+#3 custom Flourescent Systems (cualquiera puede subir su propia copia de FlourescentOS aquí y las subcarpetas están separadas en ediciones GUI o versiones CLI - ten por seguro que las versiones CLI son mucho, mucho más difíciles que las ediciones con GUI, no intentes CLI a menos que despojes al SO hasta su núcleo)
+#4 Beta Systems or Launch Aborted Systems (área muy mala, de verdad ni pases por tu mente entrar a estas carpetas porque ya sabes: cosas desordenadas, contribuciones no procesadas, básicamente un basurero)
+#5 Piezas de dispositivos SP (Super Power), etc. circuitos oficiales / esquemas de PCB (incluso puedes hacer tu dispositivo SP, subirle FlourescentOS y usarlo como de costumbre)
+#6 Otros softwares de proyectos SPM (Mel AI, HOPAC_DOS, DENEYAP_DOS (que se jodan los Institutos Deneyap, todavía no han pagado NUESTROS precios, lo siguen usando pirateado, etc.))
+
+Añadiremos algunos proyectos más aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd y más actualizaciones!
+
+Sabemos que tenemos un montón de proyectos, tal vez algunos fracasen, tal vez algunos ganen una popularidad de nicho. No tenemos el objetivo de vencer a las grandes empresas, pero creemos que seremos algo muy grande en los corazones de los amantes del software libre;
+
+¡Los amamos a todos!
+
+Subido por el equipo SPM 19/09/2026 22:35 Estambul / República de Turquía
+
+(Italiano)
+Ciao cari amanti del software libero!
+
+Come va oggi, oggi faccio il commit del mio Sistema Operativo
+
+Siamo il team SPM, noto anche come il team di progetto di alcuni bambini turchi
+Abbiamo un sacco di progetti: Roberta Stream Team, CPU SPSCT MC60
+Ma parleremo del software principale
+
+Si chiama FlourescentOS
+In realtà è scritto in python, il che significa che python non può funzionare a basso livello come il codice C (mannaggia!). Ma le periferiche del nostro progetto supportano CPython in modo molto nativo perché la scheda madre ha un Interprete Python, il che significa che funziona.
+Oggi apriamo un Repository, carico i sistemi Flourescent stock lì dentro ed è ora sotto licenza LGPL+MIT, il che significa che puoi scaricare le versioni stock, usarle o aprire i loro codici sorgente, aggiungere nuove funzionalità o persino scrivere il tuo OS basato sul core di FlourescentOS ANOE (Authentic North Operator Environment), fondamentalmente è il kernel di FlourescentOS ma è super utile, super modulare, puoi persino aggiungere un modulo a livello di kernel. Esempio: qualcuno chiamato Noah. Noah vuole fare il suo software ma Noah impara FlourescentOS. Qualcuno chiamato Lia vuole sviluppare qualcosa basato su FlourescentOS per controller ESP32, aggiungono una UI/UX e altri termini di sistemi operativi ecc. Lo chiamano Noah's FlourescentOS4ESP. E qualcuno in rete chiamato Igor ha visto un codice malfunzionante e ha scritto a Noah: "Ciao Noah, ho visto un codice malfunzionante nel tuo codice, ho scritto un codice alternativo per esso, puoi accettarlo?". E Noah dice di sì e lo aggiunge, il codice funziona! Ma ci sono alcune regole su questo repository qui:
+
+1# Non essere un cattivo coder OPPURE se vedi un cattivo coder SEGNALALO ALL'ISTANTE SENZA FIDUCIA, NON CIATTARE O INTERAGIRE CON LUI/LEI
+def badcoder()
+I cattivi coder sono idioti tossici che vogliono fondamentalmente mandare in malora il codice di tutti. Se qualcuno vuole fare il commit di un codice verso di te, rileva il passato web (Web Past) dell'autore del codice ecc., se è ==badcoder bannalo istantaneamente dal repository
+Critica i cattivi coder
+Se il suo passato web dice che ha fatto codice pessimo o tossicità
+system.ban
+Avvicinati sempre a tutti con FIDUCIA ZERO e se sospetti di lui/lei SEGNALALO, LO RIPETO SEGNALALO
+
+2# Programmazione AI limitata
+def slop_codes()
+Dato che siamo il team SPM, non vogliamo codici spazzatura (slop codes) sul nostro (#include you) (odiamo tutti gli IDIOTI con il cervello in pappa qui a meno che tu non sia della generazione beta / bambino con l'iPad). Oppure puoi fare codice con l'AI, ma dovresti testare a fondo ogni funzione del codice su una copia locale di Flourescent su VSCODE (se la tua copia di FlourescentOS è precedente alla 5 puoi usare Thonny, ma se usi FlourescentOS/5+ su Thonny si blocca o rallenta tanto quanto far girare Windows 11 su un PC di 30 anni fa con supporto per Windows 3.1). In breve: usa VSCODE, è facile ma all'inizio è difficile (a meno che tu non impari il comando pip (Python Interpreter) install library_name). Se funziona, puoi inviarci il codice e se facciamo il commit avrai contribuito al "NOSTRO" codice.
+
+#3 Fiducia zero verso chiunque sul forum
+def zero_trust()
+In realtà intendo dire innanzitutto: a meno che non sia tuo amico, non fidarti di nessuno sul forum tranne che del Team SPM. Sii sospettoso di tutto. Prima di contribuire a qualsiasi cosa dovresti ANDARE (GOTO) a una copia locale di FlourescentOS4Developers, di solito è più instabile delle normali release full-frame perché i file degli sviluppatori del repository github sono modificabili da chiunque e ci sono sei cartelle separate qui:
+
+#1 Full Releases (copie locali di codici solo lettura/download)
+#2 developers releases (modificabili/contribuibili da chiunque)
+#3 custom Flourescent Systems (chiunque può caricare la propria copia di FlourescentOS qui e le sottocartelle sono separate in edizioni GUI o versioni CLI — state certi che le versioni CLI sono molto, molto più difficili delle edizioni con GUI, non provate la CLI a meno che non speliate l'OS fino al suo core)
+#4 Beta Systems or Launch Aborted Systems (area pessima, in realtà non far passare nemmeno per il pensiero l'idea di entrare in queste cartelle perché sai: roba incasinata, contributi non elaborati, fondamentalmente una discarica)
+#5 Parti di dispositivi SP (Super Power) ecc. circuiti ufficiali / schemi PCB (puoi persino costruire il tuo dispositivo SP, caricarci sopra FlourescentOS e usarlo normalmente)
+#6 Altri software di progetti SPM (Mel AI, HOPAC_DOS, DENEYAP_DOS (fankulo agli Istituti Deneyap, non hanno ancora pagato i NOSTRI prezzi, lo usano ancora piratato ecc.))
+
+Aggiungeremo altri progetti aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd e altri aggiornamenti!
+
+Sappiamo di avere un sacco di progetti, forse alcuni falliranno, forse alcuni guadagneranno una popolarità di nicchia. Non abbiamo l'obiettivo di battere le grandi aziende, ma crediamo che diventeremo una cosa molto grande nei cuori degli amanti del software libero;
+
+Vi vogliamo bene tutti!
+
+Caricato dal Team SPM 19/09/2026 22:35 Istanbul / Repubblica di Turchia
+
+(中文)
+亲爱的自由软件爱好者们，大家好！
+
+你们今天过得怎么样？今天我提交（commit）我的操作系统
+
+我们是 SPM 团队，也被称为几个土耳其小孩的项目团队
+我们有很多项目：Roberta Stream Team、SPSCT MC60 CPU 等
+但我们要谈谈主要的软件
+
+它叫 FlourescentOS
+其实它是用 Python 写的，这意味着 Python 无法像 C 代码那样进行底层工作（真该死！）。但我们的项目外设对 CPython 的支持非常原生，因为主板内置了 Python 解释器，所以它能工作。
+今天我们开通了一个仓库，我把官方库存的 Flourescent 系统上传到那里，它现在采用 LGPL+MIT 许可证，这意味着你可以下载官方版本、使用它、或者打开它的源码、添加新功能，甚至基于 FlourescentOS 的核心 ANOE（Authentic North Operator Environment）编写你自己的操作系统。基本上它就是 FlourescentOS 的内核，但它超级有用、超级模块化，你甚至可以添加内核级模块。例如：有个叫诺亚（Noah）的人，诺亚想做自己的软件，但诺亚在学习 FlourescentOS；有个叫利亚（Lia）的人，他们想为 ESP32 控制器基于 FlourescentOS 开发一些东西，他们添加了 UI/UX 和其他操作系统术语等，将其命名为 Noah's FlourescentOS4ESP。网上有个叫伊戈尔（Igor）的人看到了一段有 Bug 的代码，写信给诺亚：“嗨，诺亚，我在你的代码里看到了有 Bug 的代码，我为其写了一段替代代码，你能接受吗？”诺亚说好并把它加了进去，代码就能运行了！但这个仓库有一些规则：
+
+1# 不要当个烂程序员，或者如果你看到烂程序员，立刻无条件举报他，不要跟他聊天或互动！
+def badcoder()
+烂程序员是那些基本上想弄坏所有人代码的有毒白痴。如果有人想向你提交代码，检测代码编写者的 Web Past 等，如果是 ==badcoder，立即从仓库中封禁他！
+批判烂程序员
+如果他的网页历史记录显示他写过烂代码或表现出毒性
+system.ban
+永远以零信任（ZERO TRUST）态度对待所有人，如果你对某人有怀疑，举报他！我再说一遍，举报他！
+
+2# 限制 AI 编程
+def slop_codes()
+既然我们是 SPM 团队，我们不希望我们的代码里出现任何垃圾代码（slop codes）（#include you）（我们这里讨厌所有脑残白痴，除非你是 Beta 世代/iPad 小孩）。或者你可以用 AI 写代码，但你必须在 VSCODE 的本地 Flourescent 副本上深入测试代码的每一个函数（如果你的 FlourescentOS 副本在 5 之前，你可以用 Thonny，但如果你在 Thonny 上使用 FlourescentOS/5+，它崩溃或变慢的程度就像在一台用了 30 年、最后支持 Windows 3.1 的老电脑上运行 Windows 11 一样糟糕）。简而言之，用 VSCODE，它很简单但一开始很难（除非你学会了 pip (Python Interpreter) install library_name 命令）。如果它能运行，你可以把代码发给我们，如果我们 commit 了，你就为“我们的”代码做出了贡献。
+
+#3 对论坛上的任何人零信任
+def zero_trust()
+其实我的意思是：首先，除非是你的朋友，否则除了 SPM 团队之外，不要信任论坛上的任何人，对一切保持怀疑。在贡献任何东西之前，你应该前往（GOTO）FlourescentOS4Developers 的本地副本，它通常比常规完整版本更不稳定，因为 github 仓库的开发人员文件可由任何人编辑，这里有六个单独的文件夹：
+
+#1 Full Releases（仅限阅读/下载代码的本地副本）
+#2 developers releases（任何人都可以编辑/贡献）
+#3 custom Flourescent Systems（任何人都可以把他们自己的 FlourescentOS 副本上传到这里，子文件夹按 GUI 版本或 CLI 版本分类 —— 我向你保证，CLI 版本比 GUI 版本难得多得多，除非你把操作系统剥离到只剩核心，否则不要尝试 CLI）
+#4 Beta Systems or Launch Aborted Systems（非常糟糕的区域，实际上连想都不要想去这些文件夹，因为你知道的，一堆乱七八糟的东西、未完成的贡献，基本上就是个垃圾场）
+#5 SP (Super Power) 设备零件等官方电路/PCB原理图（你甚至可以制作你自己的 SP 设备，上传 FlourescentOS 并在上面像平时一样使用）
+#6 其他 SPM 项目软件（Mel AI, HOPAC_DOS, DENEYAP_DOS（操蛋的 Deneyap 机构，他们到现在还没付我们的价格，还在用盗版等））
+
+我们会添加更多项目 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd 以及更多更新！
+
+我们知道我们有很多项目，也许其中一些会失败，也许其中一些会获得小众知名度。我们没有击败大公司的目标，但我们相信我们将在自由软件爱好者的心中成为一件非常伟大的事情；
+
+我们知道，真主若说“要有”，就有了。
+
+我们爱你们所有人！
+
+由 SPM 团队于 2026年9月19日 22:35 提交，伊斯坦بول / 土耳其共和国
+
+Hej kära fri-programvaruälskare!
+
+Hur mår ni alla idag, idag commitar jag mitt operativsystem
+
+Vi är SPM-teamet, även kända som några turkiska barns projektteam
+Vi har massor av projekt: Roberta Stream Team, SPSCT MC60 CPU:er
+Men vi ska prata om huvudmjukvaran
+
+Den heter FlourescentOS
+Egentligen är den skriven i python, vilket betyder att python inte kan arbeta på låg nivå som C-kod (fan också!). Men våra projekt-periferienheter stöder CPython väldigt nativt eftersom moderkortet har en Python-tolk, vilket betyder att det fungerar.
+Idag öppnar vi ett Repository, jag laddar upp stock Flourescent Systems där och det är nu LGPL+MIT-licensierat vilket betyder att du kan ladda ner stock-versioner, använda dem eller öppna dess källkoder, lägga till nya funktioner eller till och med skriva ditt eget OS baserat på FlourescentOS kärna ANOE (Authentic North Operator Environment). I grund och botten är det FlourescentOS kärna, men den är superanvändbar, supermodulär, du kan till och med lägga till en modul på kärnnivå. Exempel: någon som heter Noah. Noah vill göra sin egen mjukvara men Noah lärer sig FlourescentOS. Någon som heter Lia vill utveckla något baserat på FlourescentOS för ESP32-kontroller, de lägger till UI/UX och andra operativsystemstermer etc. de kallar det Noah's FlourescentOS4ESP. Och någon på nätet som heter Igor såg en felaktig kod och skrev till Noah: "Hej Noah, jag såg en felaktig kod i din kod, jag skriver en alternativ kod för den, kan du acceptera den?" och Noah säger ja och lägger till den, koden fungerar! Men det finns några regler i detta repository här:
+
+1# Var inte en dålig kodare ELLER om du ser en dålig kodare, RAPPORTERA DEN OMEDELBART UTAN FÖRTROENDE, CHATTA INTE ELLER INTERAGERA MED HENNE/HAN!
+def badcoder()
+Dåliga kodare är toxiska idioter som i grund och botten vill sabba allas kod. Om någon vill committa kod till dig, upptäck kodskrivarens Web Past etc. om det är ==badcoder banna honom omedelbart från repositoryt
+Kritisera dåliga kodare
+Om hans/hennes webb-historik säger att han har gjort dålig kod eller toxicitet
+system.ban
+Kom alltid närmare alla med NOLL FÖRTROENDE och om du misstänker honom/henne RAPPORTERA DET JAG SÄGER IGEN RAPPORTERA DET
+
+2# Begränsad AI-kodning
+def slop_codes()
+Eftersom vi är SPM-teamet vill vi inte ha några slop-koder på vår (#include you) (vi hatar alla hjärnröts-IDIOTER här om du inte är gen beta / ipad-kid). Eller så kan du göra kod med AI, men du bör djupt testa varje funktion i koden på en lokal Flourescent-kopia i VSCODE (om din FlourescentOS-kopia är före 5 kan du använda Thonny, men om du använder FlourescentOS/5+ på Thonny så floppar den eller saktar ner lika illa som att köra Windows 11 på en 30 år gammal Windows 3.1 sista stödda PC). Kort sagt använd VSCODE, det är enkelt men först är det svårt (om du inte lär dig pip (Python Interpreter) install library_name-kommandot). Om det fungerar kan du skicka koden till oss och om vi committar har du bidragit till "VÅR" kod.
+
+#3 Noll förtroende för någon på forumet
+def zero_trust()
+Egentligen menar jag för det första: om det inte är din vän, lita inte på någon på forumet förutom SPM-teamet, var misstänksam mot allt. Innan du bidrar med något bör du GÅ TILL (GOTO) en lokal kopia av FlourescentOS4Developers, den är vanligtvis mer instabil än vanliga fullframe-releaser eftersom github-repositoryts utvecklarfiler är redigerbara av alla och det finns sex separata mappar här:
+
+#1 Full Releases (endast läsa/ladda ner koder lokala kopior)
+#2 developers releases (redigerbara/bidragningsbara av alla)
+#3 custom Flourescent Systems (alla kan ladda upp sin egen FlourescentOS-kopia här och undermapparna är separerade via GUI-utgåvor eller CLI-versioner — du kan vara säker på att CLI-versioner är mycket, mycket svårare än GUI-utgåvor, försök inte med CLI om du inte skalar av OS:et till dess kärna)
+#4 Beta Systems or Launch Aborted Systems (mycket dåligt område, gå faktiskt inte ens förbi dina tankar om att gå in i dessa mappar eftersom du vet röriga grejer, obearbetade bidrag i grund och botten en soptipp)
+#5 SP (Super Power) enhetsdelar etc. officiella kretsar / PCB-scheman (du kan till och med göra din SP-enhet, ladda upp FlourescentOS på den och använda den som vanligt)
+#6 Andra SPM-projektmjukvaror (Mel AI, HOPAC_DOS, DENEYAP_DOS (f*ck deneyap-instituten, de har fortfarande inte betalat våra priser, använder det fortfarande piratkopierat etc.))
+
+Vi kommer att lägga till några fler projekt aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd och fler uppdateringar!
+
+Vi vet att vi har massor av projekt, kanske vissa av dem floppar, kanske vissa av dem får en nischad popularitet. Vi har inget mål som att slå stora företag, men vi tror att vi kommer att bli en väldigt stor sak i fri-programvaruälskares hjärtan;
+
+Vi vet att om Gud säger "Bli", så blir det.
+
+Vi älskar er alla!
+
+Uppladdat av SPM-teamet 19/09/2026 22:35 Istanbul / Republiken Turkiet
+
+Hei kjære fri-programvare-elskere!
+
+Hvordan har dere det i dag, i dag commiter jeg operativsystemet mitt
+
+Vi er SPM-teamet, også kjent som et fåtalls tyrkiske barns prosjektteam
+Vi har en masse prosjekter: Roberta Stream Team, SPSCT MC60 CPU-er
+Men vi skal snakke om hovedprogramvaren
+
+Den heter FlourescentOS
+Egentlig er den skrevet via python, noe som betyr at python ikke kan jobbe på lavt nivå som en C-kode (faen ta!). Men våre prosjektperiferienheter støtter CPython veldig nativt fordi hovedkortet har en Python-tolk, noe som betyr at det fungerer.
+I dag åpner vi et Repository, jeg laster opp standard Flourescent-systemer der, og det er nå LGPL+MIT-lisensiert, noe som betyr at du kan laste ned standardversjoner, bruke dem eller åpne kildekodene, legge til nye funksjoner eller til og med skrive ditt eget OS basert på FlourescentOSs kjerne ANOE (Authentic North Operator Environment). I grunnen er det FlourescentOSs kjerne, men den er supernyttig, supermodulær, du kan til og med legge til en modul på kjernenivå. Eksempel: noen som heter Noah. Noah vil lage sin egen programvare, men Noah lærer FlourescentOS. Noen som heter Lia vil utvikle noe basert på FlourescentOS for ESP32-kontrollere, de legger til et UI/UX og andre operativsystemtermer osv. De kaller det Noah's FlourescentOS4ESP. Og noen på nettet som heter Igor så en feilaktig kode og skrev til Noah: "Hei Noah, jeg så en feilaktig kode i koden din, jeg skriver en alternativ kode for den, kan du akseptere den?" og Noah sier ja og legger den til, koden fungerer! Men det er noen regler på dette repositoryet her:
+
+1# Ikke vær en dårlig koder ELLER hvis du ser en dårlig koder, RAPPORTER DEN ØYEBLIKKELIG UTEN TILLIT, IKKE CHATT ELLER SAMHANDEL MED HENNE/HAM!
+def badcoder()
+Dårlige kodere er toksiske idioter som i bunn og grunn vil ødelegge koden til alle andre. Hvis noen vil committe en kode til deg, oppdag kodeforfatterens Web Past osv. hvis det er ==badcoder, bann han øyeblikkelig fra repositoryet
+Kritisér dårlige kodere
+Hvis hans/hennes web-fortid sier at han har laget dårlig kode eller toksisitet
+system.ban
+Kom alltid nærmere alle med NULL TILLIT, og hvis du mistenker henne/han, RAPPORTER DET JEG SIER IGJEN RAPPORTER DET
+
+2# Begrenset AI-koding
+def slop_codes()
+Siden vi er SPM-teamet vil vi ikke ha noen slop-koder på vår (#include you) (vi hater alle hjerneråte-IDIOTER her med mindre du er gen beta / ipad-kid). Eller du kan lage kode med AI, men du bør teste hver funksjon i koden grundig på en lokal Flourescent-kopi i VSCODE (hvis FlourescentOS-kopien din er før 5 kan du bruke Thonny, men hvis du bruker FlourescentOS/5+ på Thonny, så flopper den eller sakker ned like ille som å kjøre Windows 11 på en 30 år gammel Windows 3.1 siste støttede PC). Kort sagt bruk VSCODE, det er enkelt, men først er det vanskelig (med mindre du lærer pip (Python Interpreter) install library_name-kommandoen). Hvis det fungerer kan du sende koden til oss, og hvis vi committer har du bidratt til "VÅR" kode.
+
+#3 Null tillit til noen på forumet
+def zero_trust()
+Egentlig mener jeg for det første: med mindre det er venner, ikke tillit noen på forumet unntatt SPM-teamet, vær mistenksom til alt. Før du bidrar med noe bør du GÅ TIL (GOTO) en lokal kopi av FlourescentOS4Developers, vanligvis er den mer ustabil enn vanlige fullframe-releaser fordi github-repositoryts utviklerfiler kan redigeres av alle og det er seks separate mapper her:
+
+#1 Full Releases (lese/laste ned koder lokale kopier)
+#2 developers releases (redigerbare/bidragsdyktige av alle)
+#3 custom Flourescent Systems (alle kan laste opp sin egen FlourescentOS-kopi her, og undermapper er separert via GUI-utgaver eller CLI-versjoner — vær sikker på at CLI-versjoner er mye, mye vanskeligere enn GUI-utgaver, ikke prøv CLI med mindre du striper OS-et til kjernen)
+#4 Beta Systems or Launch Aborted Systems (veldig dårlig område, ikke la tankene dine engang gå inn i disse mappene fordi du vet rotete ting, ikke-fortsatte bidrag i bunn og grunn en søppeldynge)
+#5 SP (Super Power) enhetsdeler osv. offisielle kretser / PCB-skjemaer (du kan til og med lage din SP-enhet, laste opp FlourescentOS på den og bruke den som normalt)
+#6 Andre SPM-prosjektprogramvarer (Mel AI, HOPAC_DOS, DENEYAP_DOS (f*ck deneyap-instituttene, de har fremdeles ikke betalt VÅRE priser, bruker det fremdeles piratkopiert osv.))
+
+Vi kommer til å legge til noen flere prosjekter aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd og flere oppdateringer!
+
+Vi vet at vi har masse prosjekter, kanskje noen av dem flopper, kanskje noen av dem får en nisjepopularitet. Vi har ikke som mål å slå store selskaper, men vi tror vi vil bli en veldig stor ting i fri-programvare-elskeres hjerter;
+
+Vi vet at hvis Gud sier "Bli", så blir det.
+
+Vi elsker dere alle!
+
+Lastet opp av SPM-teamet 19.09.2026 22:35 Istanbul / Republikken Tyrkia
+
+4. Portekizce (Português)
+Olá, queridos amantes do software livre!
+
+Como estão todos hoje, hoje eu dou commit no meu Sistema Operacional
+
+Nós somos a equipe SPM, também conhecida como a equipe de projeto de algumas crianças turcas
+Nós temos vários projetos: Roberta Stream Team, CPUs SPSCT MC60
+Mas vamos falar sobre cái software principal
+
+Chama-se FlourescentOS
+Na verdade, ele é escrito em python, o que significa que o python não consegue trabalhar em baixo nível como o código C (droga!). Mas os periféricos do nosso projeto suportam CPython de forma muito nativa porque a placa-mãe tem um Interpretador Python, o que significa que funciona.
+Hoje abrimos um Repositório, eu uploado os sistemas Flourescent padrão lá e agora ele é licenciado sob LGPL+MIT, o que significa que você pode baixar as versões padrão, usá-las ou abrir seus códigos-fonte, adicionar novos recursos ou até mesmo escrever seu próprio SO baseado no núcleo do FlourescentOS, o ANOE (Authentic North Operator Environment). Basicamente é o kernel do FlourescentOS, mas é super útil, super modular, você pode até adicionar um módulo em nível de kernel. Exemplo: alguém chamado Noah. Noah quer fazer seu próprio software, mas Noah aprende o FlourescentOS. Alguém chamado Lia quer desenvolver algo baseado no FlourescentOS para controladores ESP32, eles adicionam UI/UX e outros termos de sistemas operacionais, etc. Eles chamam de Noah's FlourescentOS4ESP. E alguém na net chamado Igor viu um código com falhas e escreveu para Noah: "Oi Noah, vi um código com falhas no seu código, escrevi um código alternativo para ele, você pode aceitar?" e Noah diz que sim e adiciona, o código funciona! Mas há algumas regras neste repositório aqui:
+
+1# Não seja um codificador ruim OU se você ver um codificador ruim, DENUNCIE-O INSTANTANEAMENTE SEM CONFIANÇA, NÃO CONVERSE OU INTERAJA COM ELE/ELA!
+def badcoder()
+Codificadores ruins são idiotas tóxicos que basicamente querem estragar o código de todo mundo. Se alguém quiser fazer commit de um código para você, detecte o Web Past do autor do código, etc., se for ==badcoder, bane-o instantaneamente do repositório
+Criteque os codificadores ruins
+Se o histórico web dele/dela diz que ele fez código ruim ou toxicidade
+system.ban
+Aproxime-se sempre de todos com CONFIANÇA ZERO (Zero Trust) e se você suspeitar dele/dela, DENUNCIE, EU DIGO DE NOVO, DENUNCIE
+
+2# Codificação de IA limitada
+def slop_codes()
+Como somos a equipe SPM, não queremos nenhum código lixo (slop codes) no nosso (#include you) (nós odiamos todos os IDIOTAS com podridão cerebral aqui, a menos que você seja da geração beta / criança de iPad). Ou você pode fazer código com IA, mas deve testar profundamente cada função do código em uma cópia local do Flourescent no VSCODE (se a sua cópia do FlourescentOS for anterior à 5, você pode usar o Thonny, mas se você usar FlourescentOS/5+ no Thonny, ele trava ou fica tão lento quanto rodar o Windows 11 em um PC de 30 anos atrás com suporte ao Windows 3.1). Resumindo: use VSCODE, é fácil, mas no início é difícil (a menos que você aprenda o comando pip (Python Interpreter) install library_name). Se funcionar, você pode nos enviar o código e, se fizermos commit, você contribuiu para o "NOSSO" código.
+
+#3 Confiança Zero em qualquer pessoa no fórum
+def zero_trust()
+Na verdade, quero dizer primeiro: a menos que seja seu amigo, não confie em ninguém no fórum, exceto na Equipe SPM, desconfie de tudo. Antes de contribuir com qualquer coisa, você deve IR (GOTO) para uma cópia local do FlourescentOS4Developers, geralmente é mais instável do que as versões de lançamento full-frame normais porque os arquivos de desenvolvedor do repositório github são editáveis por qualquer um e existem seis pastas separadas aqui:
+
+#1 Full Releases (cópias locais de códigos apenas para leitura/download)
+#2 developers releases (editáveis/contribuíveis por qualquer pessoa)
+#3 custom Flourescent Systems (qualquer um pode enviar sua própria cópia do FlourescentOS aqui e as subpastas são separadas por edições GUI ou versões CLI — tenha certeza de que as versões CLI são muito, muito mais difíceis do que as edições GUI, não tente CLI a menos que você desosse o SO até o seu núcleo)
+#4 Beta Systems or Launch Aborted Systems (área muito ruim, na verdade nem passe pela sua cabeça entrar nessas pastas porque você sabe: coisas bagunçadas, contribuições não processadas, basicamente uma lixeira)
+#5 Peças de dispositivos SP (Super Power), etc. circuitos oficiais / esquemas de PCB (você pode até fazer seu dispositivo SP, carregar o FlourescentOS nele e usá-lo normalmente)
+#6 Outros softwares de projetos SPM (Mel AI, HOPAC_DOS, DENEYAP_DOS (f*ck os Institutos Deneyap, eles ainda não pagaram NOSSOS preços, ainda usam pirateado, etc.))
+
+Adicionaremos mais alguns projetos aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd e mais atualizações!
+
+Sabemos que temos um monte de projetos, talvez alguns falhem, talvez alguns ganhem uma popularidade de nicho. Não temos o objetivo de vencer grandes empresas, mas acreditamos que seremos algo muito grande nos corações dos amantes do software livre;
+
+Sabemos que se Deus disser "Haja", acontece.
+
+Amamos todos vocês!
+
+Enviado pela Equipe SPM 19/09/2026 22:35 Istambul / República da Turquia
+
+(हिन्दी)
+नमस्ते प्रिय फ्री-सॉफ्टवेयर प्रेमियों!
+
+आप सब कैसे हैं आज, आज मैं अपना ऑपरेटिंग सिस्टम कमिट (commit) कर रहा हूँ
+
+हम SPM टीम हैं, जिसे कुछ तुर्की बच्चों की प्रोजेक्ट टीम के रूप में भी जाना जाता है
+हमारे पास बहुत सारे प्रोजेक्ट्स हैं: Roberta Stream Team, SPSCT MC60 CPU s
+लेकिन हम मुख्य सॉफ्टवेयर के बारे में बात करेंगे
+
+इसे FlourescentOS कहा जाता है
+वास्तव में यह पाइथन (Python) के माध्यम से लिखा गया है जिसका मतलब है कि पाइथन सी कोड की तरह लो-लेवल पर काम नहीं कर सकता (कसम से!)। लेकिन हमारे प्रोजेक्ट के पेरिफेरल्स CPython को बहुत नेटिव तरीके से सपोर्ट करते हैं क्योंकि मदरबोर्ड में पाइथन इंटरप्रेटर है जिसका मतलब है कि यह काम करता है।
+आज हम एक रिपॉजिटरी (Repository) खोलते हैं, मैं स्टॉक Flourescent सिस्टम को वहाँ अपलोड करता हूँ और अब यह LGPL+MIT लाइसेंस प्राप्त है, जिसका मतलब है कि आप स्टॉक संस्करण डाउनलोड कर सकते हैं, इसका उपयोग कर सकते हैं या इसके सोर्स कोड खोल सकते हैं, नई सुविधाएँ जोड़ सकते हैं और यहाँ तक कि FlourescentOS के कोर ANOE (Authentic North Operator Environment) के आधार पर अपना खुद का OS लिख सकते हैं। मूल रूप से यह FlourescentOS का कर्नेल है लेकिन यह सुपर उपयोगी, सुपर मॉड्यूलर है, आप यहाँ तक कि कर्नेल-स्तर का मॉड्यूल भी जोड़ सकते हैं। उदाहरण: कोई जिसका नाम Noah है, Noah अपना खुद का सॉफ्टवेयर बनाना चाहता है लेकिन Noah FlourescentOS सीखता है। कोई जिसका नाम Lia है, वे ESP32 कंट्रोलर के लिए FlourescentOS के आधार पर कुछ विकसित करना चाहते हैं, वे UI/UX और अन्य ऑपरेटिंग सिस्टम शर्तों आदि को जोड़ते हैं। वे इसे Noah's FlourescentOS4ESP कहते हैं। और नेट पर Igor नाम के किसी व्यक्ति ने एक खराब कोड देखा और Noah को लिखा: "हाय Noah, मैंने आपके कोड पर एक खराब कोड देखा, मैं इसके लिए एक वैकल्पिक कोड लिखता हूँ, क्या आप इसे स्वीकार कर सकते हैं?" और Noah हाँ कहता है और इसे जोड़ता है, कोड काम करता है! लेकिन इस रिपॉजिटरी पर कुछ नियम हैं:
+
+1# एक बुरा कोडर न बनें या यदि आप किसी बुरे कोडर को देखते हैं, तो बिना किसी विश्वास के उसे तुरंत रिपोर्ट करें, चैट न करें या उसके साथ बातचीत न करें!
+def badcoder()
+बुरे कोडर जहरीلے बेवकूफ हैं जो मूल रूप से सभी के कोड को खराब करना चाहते हैं। यदि कोई आपको कोड कमिट करना चाहता है, तो कोड लेखक के Web Past आदि का पता लगाएं, यदि यह ==badcoder है, तो रिपॉजिटरी से तुरंत बैन करें
+बुरे कोडर की आलोचना करें
+यदि उसका वेब पास्ट कहता है कि उसने बुरा कोड या विषाक्तता (toxicity) बनाई है
+system.ban
+हमेशा शून्य विश्वास (ZERO TRUST) के साथ सभी के पास आएं और यदि आपको उस पर संदेह है तो रिपोर्ट करें, मैं फिर से कहता हूँ रिपोर्ट करें!
+
+2# सीमित एआई कोडिंग
+def slop_codes()
+चूंकि हम SPM टीम हैं, हम अपने यहाँ कोई भी घटिया कोड (slop codes) नहीं चाहते हैं (#include you) (हम यहाँ के सभी दिमागी रूप से सड़े हुए बेवकूफों से नफरत करते हैं जब तक कि आप जेन बेटा / आईपैड किड नहीं हैं)। या आप AI के साथ कोड बना सकते हैं, लेकिन आपको VSCODE पर स्थानीय Flourescent कॉपी पर कोड के प्रत्येक फ़ंक्शन का गहराई से परीक्षण करना चाहिए (यदि आपका FlourescentOS कॉपी 5 से पहले का है तो आप Thonny का उपयोग कर सकते हैं लेकिन यदि आप Thonny पर FlourescentOS/5+ का उपयोग करते हैं, तो यह 30 साल पुराने Windows 3.1 समर्थित अंतिम पीसी पर Windows 11 चलाने जितना बुरा क्रैश या धीमा हो जाता है)। संक्षेप में VSCODE का उपयोग करें, यह आसान है लेकिन पहले यह कठिन है (जब तक कि आप pip (Python Interpreter) install library_name कमांड नहीं सीख लेते)। यदि यह काम करता है तो आप हमें कोड भेज सकते हैं और यदि हम कमिट करते हैं तो आपने "हमारे" कोड में योगदान दिया है।
+
+#3 फ़ोरम पर किसी पर भी शून्य विश्वास
+def zero_trust()
+वास्तव में मेरा मतलब पहले यह है कि जब तक यह आपका दोस्त न हो, SPM टीम को छोड़कर फ़ोरम पर किसी भी पर भरोसा न करें, हर चीज़ के बारे में संशय रखें। कुछ भी योगदान करने से पहले आपको FlourescentOS4Developers की स्थानीय कॉपी पर जाना चाहिए (GOTO), यह आमतौर पर सामान्य फुल-फ्रेम रिलीज़ से अधिक अस्थिर होता है क्योंकि github रिपॉजिटरी डेवलपर्स फ़ाइलें किसी के द्वारा भी संपादन योग्य हैं और यहाँ छह अलग-अलग फ़ोल्डर हैं:
+
+#1 Full Releases (केवल पढ़ने/डाउनलोड करने के लिए कोड की स्थानीय प्रतियां)
+#2 developers releases (किसी भी व्यक्ति द्वारा संपादित / योगदान करने योग्य)
+#3 custom Flourescent Systems (कोई भी यहाँ अपनी खुद की FlourescentOS कॉपी अपलोड कर सकता है और उप-फ़ोल्डर GUI संस्करणों या CLI संस्करणों द्वारा अलग किए गए हैं — आप इसके बारे में निश्चित हैं कि CLI संस्करण GUI संस्करणों की तुलना में बहुत, बहुत कठिन हैं, CLI का प्रयास न करें जब तक कि आप OS को उसके कोर तक न छीन लें)
+#4 Beta Systems or Launch Aborted Systems (बहुत बुरा क्षेत्र, वास्तव में इन फ़ोल्डरों में जाने के अपने विचारों को अपने मन से न गुजरने दें क्योंकि आप जानते हैं कि गड़बड़ चीजें, असंपादित योगदान मूल रूप से एक कचरा गड्ढा है)
+#5 SP (Super Power) डिवाइस पार्ट्स आदि आधिकारिक सर्किट / पीसीबी स्कीमेटिक्स (यहाँ तक कि आप अपनी SP डिवाइस बना सकते हैं, उस पर FlourescentOS अपलोड कर सकते हैं और इसे सामान्य रूप से उपयोग कर सकते हैं)
+#6 अन्य SPM प्रोजेक्ट सॉफ्टवेयर (Mel AI, HOPAC_DOS, DENEYAP_DOS (f*ck deneyap संस्थान, उन्होंने अभी तक हमारी कीमतें नहीं चुकाई हैं, अभी भी पायरेटेड आदि का उपयोग कर रहे हैं))
+
+हम कुछ और प्रोजेक्ट जोड़ेंगे aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd और अधिक अपडेट!
+
+हम जानते हैं कि हमारे पास बहुत सारे प्रोजेक्ट हैं, हो सकता है कि उनमें से कुछ फ्लॉप हो जाएं, हो सकता है कि उनमें से कुछ को एक विशिष्ट लोकप्रियता मिले। हमारा बड़ी कंपनियों को हराने जैसा कोई लक्ष्य नहीं है, लेकिन हमारा मानना है कि हम फ्री-सॉफ्टवेयर प्रेमियों के दिलों में बहुत बड़ी चीज़ बन जाएंगे;
+
+हम जानते हैं कि अगर अल्लाह "हो जा" कहता है, तो वह हो जाता है।
+
+हम आप सभी से प्यार करते हैं!
+
+SPM टीम द्वारा अपलोड किया गया 19/09/2026 22:35 इस्तांबुल / तुर्की गणराज्य
+
+Bonjour chers amateurs de logiciels libres !
+
+Comment allez-vous tous aujourd'hui, aujourd'hui je fais un commit de mon système d'exploitation
+
+Nous sommes l'équipe SPM, également connue sous le nom de l'équipe de projet de quelques enfants turcs
+Nous avons beaucoup de projets : Roberta Stream Team, processeurs SPSCT MC60
+Mais nous allons parler du logiciel principal
+
+Il s'appelle FlourescentOS
+En fait, il est écrit en python, ce qui signifie que python ne peut pas fonctionner à bas niveau comme un code C (zut !). Mais les périphériques de notre projet prennent en charge CPython de manière très native car la carte mère possède un interpréteur Python, ce qui signifie que ça fonctionne.
+Aujourd'hui nous ouvrons un Dépôt (Repository), je télécharge les systèmes Flourescent de base là-bas et il est maintenant sous licence LGPL+MIT, ce qui signifie que vous pouvez télécharger des versions de base, les utiliser ou ouvrir leurs codes source, ajouter de nouvelles fonctionnalités ou même écrire votre propre OS basé sur le noyau de FlourescentOS ANOE (Authentic North Operator Environment). Fondamentalement, c'est le noyau de FlourescentOS, mais il est super utile, super modulaire, vous pouvez même ajouter un module au niveau du noyau. Exemple : quelqu'un nommé Noah. Noah veut faire son propre logiciel mais Noah apprend FlourescentOS. Quelqu'un nommé Lia veut développer quelque chose basé sur FlourescentOS pour les contrôleurs ESP32, ils ajoutent une UI/UX et d'autres termes de systèmes d'exploitation, etc., ils l'appellent Noah's FlourescentOS4ESP. Et quelqu'un sur le net nommé Igor a vu un code défectueux et a écrit à Noah : "Salut Noah, j'ai vu un code défectueux dans ton code, j'écris un code alternatif pour cela, peux-tu l'accepter ?" et Noah dit oui et l'ajoute, le code fonctionne ! Mais il y a quelques règles dans ce dépôt ici :
+
+1# Ne soyez pas un mauvais codeur OU si vous voyez un mauvais codeur, SIGNALEZ-LE INSTANTANÉMENT SANS CONFIANCE, NE DISCUTEZ PAS ET N'INTERAGISSEZ PAS AVEC LUI/ELLE !
+def badcoder()
+Les mauvais codeurs sont des idiots toxiques qui veulent fondamentalement perturber le code de tout le monde. Si quelqu'un veut vous committer un code, détectez le passé web (Web Past) de l'auteur du code, etc., si c'est ==badcoder, banissez-le instantanément du dépôt
+Critiquez les mauvais codeurs
+Si son passé web indique qu'il a fait du mauvais code ou de la toxicité
+system.ban
+Approchez toujours tout le monde avec une CONFIANCE ZÉRO (ZERO TRUST) et si vous le/la soupçonnez, SIGNALEZ-LE, JE LE REDIS, SIGNALEZ-LE
+
+2# Programmation IA limitée
+def slop_codes()
+Comme nous sommes l'équipe SPM, nous ne voulons pas de codes poubelles (slop codes) sur notre (#include you) (nous détestons tous les IDiOTS aux cerveaux pourris ici, à moins que vous ne soyez de la génération bêta / gamin à iPad). Ou vous pouvez créer du code avec l'IA, mais vous devez tester en profondeur chaque fonction du code sur une copie locale Flourescent dans VSCODE (si votre copie FlourescentOS est antérieure à la 5, vous pouvez utiliser Thonny, mais si vous utilisez FlourescentOS/5+ sur Thonny, cela plante ou ralentit aussi mal que d'exécuter Windows 11 sur un PC Windows 3.1 pris en charge pour la dernière fois il y a 30 ans). En bref : utilisez VSCODE, c'est facile mais au début c'est dur (sauf si vous apprenez la commande pip (Python Interpreter) install library_name). Si cela fonctionne, vous pouvez nous envoyer le code et si nous committons, vous avez contribué à "NOTRE" code.
+
+#3 Confiance zéro envers quiconque sur le forum
+def zero_trust()
+En fait, je veux dire premièrement : à moins que ce ne soit votre ami, ne faites confiance à personne sur le forum à part l'équipe SPM, soyez suspicieux de tout. Avant de contribuer à quoi que ce soit, vous devriez ALLER (GOTO) à une copie locale de FlourescentOS4Developers, c'est généralement plus instable que les versions full-frame normales car les fichiers développeur du dépôt github sont modifiables par n'importe qui et il y a six dossiers séparés ici :
+
+#1 Full Releases (copies locales de codes en lecture/téléchargement uniquement)
+#2 developers releases (modifiables/contribuables par tout le monde)
+#3 custom Flourescent Systems (tout le monde peut télécharger sa propre copie de FlourescentOS ici et les sous-dossiers sont séparés par éditions GUI ou versions CLI — soyez certains que les versions CLI sont beaucoup, beaucoup plus difficiles que les éditions GUI, n'essayez pas CLI à moins d'avoir dépouillé l'OS jusqu'à son noyau)
+#4 Beta Systems or Launch Aborted Systems (très mauvaise zone, ne laissez en fait pas traverser vos pensées l'idée d'aller dans ces dossiers car vous savez : des trucs en désordre, des contributions non traitées, fondamentalement une décharge)
+#5 Pièces d'appareils SP (Super Power) etc. circuits officiels / schémas PCB (vous pouvez même fabriquer votre appareil SP, y télécharger FlourescentOS et l'utiliser normalement)
+#6 Autres logiciels de projets SPM (Mel AI, HOPAC_DOS, DENEYAP_DOS (f*ck les instituts Deneyap, n'ont toujours pas payé NOS prix, l'utilisent encore de manière piratée, etc.))
+
+Nous ajouterons d'autres projets aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnndddddddddddddddddddddddddddddddd et d'autres mises à jour !
+
+Nous savons que nous avons beaucoup de projets, certains vont peut-être flopper, d'autres vont peut-être gagner une popularité de niche. Nous n'avons pas pour objectif de battre les grandes entreprises, mais nous croyons que nous serons une très grande chose dans le cœur des amateurs de logiciels libres ;
+
+Nous savons que si Dieu dit "Sois", cela est.
+
+Nous vous aimons tous !
+
+Téléchargé par l'équipe SPM le 19/09/2026 à 22:35 Istanbul / République de Turquie
+
+
+
+مرحباً أيها الأحباء عشاق البرمجيات الحرة!
+
+كيف حالكم جميعاً اليوم، اليوم أقوم بعمل Commit لنظام التشغيل الخاص بي
+
+نحن فريق SPM، والمعروف أيضاً بفريق مشاريع لبعض الأطفال الأتراك
+لدينا الكثير من المشاريع: Roberta Stream Team، وحدات المعالجة المركزية SPSCT MC60
+لكننا سنتحدث عن البرمجيات الرئيسية
+
+اسمها FlourescentOS
+في الواقع هي مكتوبة بلغة بايثون (Python)، مما يعني أن بايثون لا يمكنها العمل بمستوى منخفض مثل كود لغة C (تباً!). لكن ملحقات مشروعنا تدعم CPython بشكل أصلي جداً لأن اللوحة الأم (Motherboard) تحتوي على مفسر بايثون (Python Interpreter) مما يعني أنها تعمل.
+اليوم نفتح مستودعاً (Repository)، أقوم برفع أنظمة Flourescent الأساسية إلى هناك وهي الآن مرخصة تحت رخصة LGPL+MIT، مما يعني أنه يمكنك تنزيل الإصدارات الأساسية، استخدامها، أو فتح شفراتها المصدرية، إضافة ميزات جديدة أو حتى كتابة نظام التشغيل الخاص بك بناءً على نواة FlourescentOS وهي ANOE (Authentic North Operator Environment)، أساساً هي نواة FlourescentOS ولكنها مفيدة للغاية وقابلة للتعديل بشكل كبير (Modular)، بل يمكنك حتى إضافة وحدة على مستوى النواة (Kernel level module)، مثال: شخص يدعى Noah، Noah يريد صنع برنامجه الخاص لكنه يتعلم FlourescentOS، شخص يدعى Lia يريد تطوير شيء بناءً على FlourescentOS لمتحكمات ESP32، فيضيفان واجهة مستخدم UI/UX ومصطلحات أخرى لأنظمة التشغيل إلخ، ويسمونها Noah's FlourescentOS4ESP. وشخص على الشبكة يدعى Igor رأى كوداً معيباً فكتب لـ Noah: "مرحباً Noah، لقد رأيت كوداً معيباً في كودك، لقد كتبت كوداً بديلل له فهل يمكنك قبوله؟" ويقول Noah نعم ويضيفه ويعمل الكود! ولكن هناك بعض القواعد في هذا المستودع هنا:
+
+1# لا تكن مبرمجاً سيئاً أو إذا رأيت مبرمجاً سيئاً فأبلغ عنه فوراً بدون ثقة، لا تحادثه أو تتفاعل معه!
+def badcoder()
+المبرمجون السيئون هم حمقى سامون يريدون أساساً تخريب كود الجميع، إذا أراد أي شخص عمل Commit لكود عندك، اكتشف كاتب الكود عبر Web Past إلخ، إذا كان ==badcoder فقم بحظره فوراً من المستودع
+انتقد المبرمجين السيئين
+إذا كان سجله على الويب يشير إلى أنه صنع كوداً سيئاً أو أظهر سمية
+system.ban
+تعامل دائماً مع الجميع بـ "صفر ثقة" (Zero Trust) وإذا كنت تشك بشخص ما فأبلغ عنه، أقولها مرة أخرى: أبلغ عنه!
+
+2# برمجة محدودة بالذكاء الاصطناعي
+def slop_codes()
+بما أننا فريق SPM فنحن لا نريد أي أكواد قمامة (Slop codes) لدينا (#include you) (نحن نكره جميع الأغبياء الذين تعرضت عقولهم للتلف هنا ما لم تكن من الجيل بيتا / طفل آي باد). أو يمكنك صنع كود باستخدام الذكاء الاصطناعي، ولكن يجب عليك اختبار كل دالة في الكود بعمق على نسخة محلية من Flourescent في VSCODE (إذا كانت نسختك من FlourescentOS أقدم من الإصدار 5 يمكنك استخدام Thonny، ولكن إذا استخدمت FlourescentOS/5+ على Thonny فسوف تتعطل أو تبطئ لدرجة تجعل تشغيل Windows 11 على جهاز ويندوز 3.1 عمره 30 سنة يبدو رائعاً بجانبها). باختصار: استخدم VSCODE، فهو سهل ولكنه صعب في البداية (ما لم تتعلم أمر pip (Python Interpreter) install library_name). إذا عمل الكود فيمكنك إرساله إلينا وإذا قمنا بعمل Commit فسوف تكون قد ساهمت في كودنا "نحن".
+
+#3 صفر ثقة لأي شخص في المنتدى
+def zero_trust()
+أقصد في الواقع أولاً: ما لم يكن صديقك، فلا تثق بأحد في المنتدى باستثناء فريق SPM، كن متشككاً في كل شيء. قبل المساهمة بأي شيء يجب أن تذهب (GOTO) إلى نسخة محلية من FlourescentOS4Developers وغالباً ما تكون غير مستقرة مقارنة بالإصدارات الكاملة العادية لأن ملفات المطورين في مستودع جيت هب قابلة للتعديل من قبل الجميع وهناك ستة مجلدات منفصلة هنا:
+
+#1 Full Releases (نسخ محلية للقراءة والتحميل فقط)
+#2 developers releases (قابلة للتعديل والمساهمة من الجميع)
+#3 custom Flourescent Systems (يمكن للجميع رفع نسختهم الخاصة من FlourescentOS هنا والمجلدات الفرعية مقسمة إلى إصدارات GUI أو إصدارات CLI —تأكد أن إصدارات CLI أصعب بكثير جداً من إصدارات GUI، لا تجرّب CLI ما لم تقم بتجريد نظام التشغيل حتى جذره)
+#4 Beta Systems or Launch Aborted Systems (منطقة سيئة للغاية، في الواقع لا تجعل الأفكار تمر في عقلك حول دخول هذه المجلدات لأنها كما تعلم أشياء فوضوية ومساهمات غير معالجة، بمثابة مكب نفايات)
+#5 قطع أجهزة SP (Super Power) إلخ، الدوائر الرسمية / مخططات PCB (حتى أنك يمكنك صنع جهاز SP الخاص بك، رفع FlourescentOS عليه واستخدامه بشكل طبيعي)
+#6 برمجيات مشاريع SPM الأخرى (Mel AI, HOPAC_DOS, DENEYAP_DOS (تباً لمعاهد Deneyap، ما زالوا لم يدفعوا أسعارنا ويستخدمونه بشكل قرصنة إلخ.))
+
+سنضيف المزيد من المشاريع أأأأأأأأأأأننننننننننننننننننند والمزيد من التحديثات!
+
+نحن نعلم أن لدينا الكثير من المشاريع، ربما يفشل بعضها، وربما يحظى البعض بشعبية في مجال معين (Niche). ليس لدينا هدف مثل منافسة الشركات الكبرى ولكننا نؤمن بأننا سنصبح شيئاً عظيماً جداً في قلوب عشاق البرمجيات الحرة؛
+
+نحن نحبكم جميعاً! نحن نعلم أن الله إذا قال "كن" فيكون
+
+تم الرفع بواسطة فريق SPM في 19/09/2026 22:35 اسطنبول / الجمهورية التركية
