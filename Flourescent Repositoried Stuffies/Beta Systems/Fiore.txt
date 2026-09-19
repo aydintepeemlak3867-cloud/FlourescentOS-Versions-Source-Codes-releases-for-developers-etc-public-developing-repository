@@ -1,0 +1,4013 @@
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QTextEdit,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Texter(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Texter - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        export_action = QAction("Export JSON", self)
+        export_action.triggered.connect(self.export_json)
+        file_menu.addAction(export_action)
+
+        import_action = QAction("Import JSON", self)
+        import_action.triggered.connect(self.import_json)
+        file_menu.addAction(import_action)
+
+        layout.setMenuBar(menubar)
+
+        # Editör
+        self.editor = QTextEdit()
+        layout.addWidget(self.editor)
+
+        # Audit log butonu
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        # Resource monitor butonu
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        # Process manager butonu
+        btn_proc = QPushButton("Process Kaydet")
+        btn_proc.clicked.connect(self.register_process)
+        layout.addWidget(btn_proc)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    # --- Fonksiyonlar ---
+    def new_file(self):
+        self.editor.clear()
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Texter")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "Text Files (*.txt)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                self.editor.setText(f.read())
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        if self.current_file:
+            with open(self.current_file, "w", encoding="utf-8") as f:
+                f.write(self.editor.toPlainText())
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Save File", self.current_file)
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "Text Files (*.txt)")
+            if fname:
+                with open(fname, "w", encoding="utf-8") as f:
+                    f.write(self.editor.toPlainText())
+                self.current_file = fname
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def export_json(self):
+        fname, _ = QFileDialog.getSaveFileName(self, "Export JSON", "", "JSON Files (*.json)")
+        if fname:
+            data = {"text": self.editor.toPlainText(), "file": self.current_file}
+            with open(fname, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Export JSON", fname)
+
+    def import_json(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Import JSON", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.editor.setText(data.get("text", ""))
+            self.current_file = data.get("file", None)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Import JSON", fname)
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Texter Action", "User edited text")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            cpu = psutil.cpu_percent()
+            mem = psutil.virtual_memory().percent
+            QMessageBox.information(self, "Resources", f"CPU: {cpu}%\nRAM: {mem}%")
+
+    def register_process(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "process_manager"):
+            name = os.path.basename(self.current_file)
+            self.kernel.process_manager.register_process(name, priority=5, group="Texter")
+            QMessageBox.information(self, "Process", f"{name} process olarak kaydedildi!")
+
+
+
+import json, os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QTableWidget, QTableWidgetItem,
+    QPushButton, QLabel, QFileDialog, QInputDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Biller(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Biller - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Tablo
+        self.table = QTableWidget(0, 2)
+        self.table.setHorizontalHeaderLabels(["Müşteri", "Tutar"])
+        layout.addWidget(self.table)
+
+        # Butonlar
+        btn_add = QPushButton("Fatura Ekle")
+        btn_add.clicked.connect(self.add_invoice)
+        layout.addWidget(btn_add)
+
+        btn_total = QPushButton("Toplam Hesapla")
+        btn_total.clicked.connect(self.calculate_total)
+        layout.addWidget(btn_total)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.total_label = QLabel("Toplam: 0")
+        layout.addWidget(self.total_label)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def add_invoice(self):
+        customer, ok1 = QInputDialog.getText(self, "Yeni Fatura", "Müşteri adı:")
+        if not ok1 or not customer:
+            return
+        amount, ok2 = QInputDialog.getDouble(self, "Yeni Fatura", "Tutar:", 0, 0, 1000000, 2)
+        if not ok2:
+            return
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        self.table.setItem(row, 0, QTableWidgetItem(customer))
+        self.table.setItem(row, 1, QTableWidgetItem(str(amount)))
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Add Invoice", f"{customer} - {amount}")
+
+    def calculate_total(self):
+        total = 0
+        for row in range(self.table.rowCount()):
+            try:
+                total += float(self.table.item(row, 1).text())
+            except:
+                pass
+        self.total_label.setText(f"Toplam: {total}")
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Calculate Total", str(total))
+
+    def new_file(self):
+        self.table.setRowCount(0)
+        self.total_label.setText("Toplam: 0")
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Biller")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.table.setRowCount(0)
+            for invoice in data.get("invoices", []):
+                row = self.table.rowCount()
+                self.table.insertRow(row)
+                self.table.setItem(row, 0, QTableWidgetItem(invoice["customer"]))
+                self.table.setItem(row, 1, QTableWidgetItem(str(invoice["amount"])))
+            self.total_label.setText(f"Toplam: {data.get('total', 0)}")
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        invoices = []
+        for row in range(self.table.rowCount()):
+            customer = self.table.item(row, 0).text()
+            amount = float(self.table.item(row, 1).text())
+            invoices.append({"customer": customer, "amount": amount})
+        total = sum(inv["amount"] for inv in invoices)
+        data = {"invoices": invoices, "total": total}
+
+        if self.current_file:
+            fname = self.current_file
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "JSON Files (*.json)")
+            if not fname:
+                return
+            self.current_file = fname
+
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Biller Action", "User modified invoices")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QFileDialog, QInputDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Notes(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Notes - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Not listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        # Butonlar
+        btn_add = QPushButton("Not Ekle")
+        btn_add.clicked.connect(self.add_note)
+        layout.addWidget(btn_add)
+
+        btn_delete = QPushButton("Seçili Notu Sil")
+        btn_delete.clicked.connect(self.delete_note)
+        layout.addWidget(btn_delete)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def add_note(self):
+        text, ok = QInputDialog.getText(self, "Yeni Not", "Not içeriği:")
+        if ok and text:
+            self.list.addItem(text)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Add Note", text)
+
+    def delete_note(self):
+        row = self.list.currentRow()
+        if row >= 0:
+            note = self.list.item(row).text()
+            self.list.takeItem(row)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Delete Note", note)
+
+    def new_file(self):
+        self.list.clear()
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Notes")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.list.clear()
+            for note in data.get("notes", []):
+                self.list.addItem(note)
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        notes = [self.list.item(i).text() for i in range(self.list.count())]
+        data = {"notes": notes}
+
+        if self.current_file:
+            fname = self.current_file
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "JSON Files (*.json)")
+            if not fname:
+                return
+            self.current_file = fname
+
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Notes Action", "User modified notes")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+import smtplib, imaplib, email, json
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QLineEdit, QPushButton, QListWidget,
+    QLabel, QMenuBar, QFileDialog, QMessageBox, QInputDialog
+)
+from PyQt6.QtGui import QAction
+
+class EmailClient(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("EmailClient - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Giriş alanları
+        self.email_input = QLineEdit()
+        self.email_input.setPlaceholderText("E-posta adresi")
+        self.pass_input = QLineEdit()
+        self.pass_input.setPlaceholderText("Şifre / Uygulama Şifresi")
+        self.pass_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.smtp_input = QLineEdit()
+        self.smtp_input.setPlaceholderText("SMTP sunucusu (örn: smtp.gmail.com)")
+        self.imap_input = QLineEdit()
+        self.imap_input.setPlaceholderText("IMAP sunucusu (örn: imap.gmail.com)")
+        self.port_input = QLineEdit()
+        self.port_input.setPlaceholderText("SMTP port (örn: 587)")
+
+        btn_login = QPushButton("Hesap Aç")
+        btn_login.clicked.connect(self.login)
+
+        layout.addWidget(self.email_input)
+        layout.addWidget(self.pass_input)
+        layout.addWidget(self.smtp_input)
+        layout.addWidget(self.imap_input)
+        layout.addWidget(self.port_input)
+        layout.addWidget(btn_login)
+
+        # Gelen kutusu
+        self.inbox = QListWidget()
+        layout.addWidget(self.inbox)
+
+        btn_fetch = QPushButton("Postaları Getir")
+        btn_fetch.clicked.connect(self.fetch_mails)
+        layout.addWidget(btn_fetch)
+
+        btn_compose = QPushButton("Yeni Mail")
+        btn_compose.clicked.connect(self.compose_mail)
+        layout.addWidget(btn_compose)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+
+        # Hesap bilgileri
+        self.email = None
+        self.password = None
+        self.smtp_server = None
+        self.imap_server = None
+        self.smtp_port = None
+
+    def login(self):
+        self.email = self.email_input.text()
+        self.password = self.pass_input.text()
+        self.smtp_server = self.smtp_input.text()
+        self.imap_server = self.imap_input.text()
+        try:
+            self.smtp_port = int(self.port_input.text())
+        except:
+            self.smtp_port = 587
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Login", self.email)
+
+    def fetch_mails(self):
+        try:
+            mail = imaplib.IMAP4_SSL(self.imap_server)
+            mail.login(self.email, self.password)
+            mail.select("inbox")
+            result, data = mail.search(None, "ALL")
+            ids = data[0].split()
+            self.inbox.clear()
+            for i in ids[-10:]:  # son 10 mail
+                result, msg_data = mail.fetch(i, "(RFC822)")
+                raw_email = msg_data[0][1]
+                msg = email.message_from_bytes(raw_email)
+                subject = msg["subject"]
+                self.inbox.addItem(subject if subject else "(No Subject)")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Fetch Mails", f"{len(ids)} mails fetched")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Mail fetch failed: {e}")
+
+    def compose_mail(self):
+        to, ok1 = QInputDialog.getText(self, "Yeni Mail", "Alıcı:")
+        if not ok1 or not to:
+            return
+        subject, ok2 = QInputDialog.getText(self, "Yeni Mail", "Konu:")
+        if not ok2 or not subject:
+            return
+        body, ok3 = QInputDialog.getText(self, "Yeni Mail", "Mesaj:")
+        if not ok3 or not body:
+            return
+        try:
+            msg = MIMEMultipart()
+            msg["From"] = self.email
+            msg["To"] = to
+            msg["Subject"] = subject
+            msg.attach(MIMEText(body, "plain"))
+            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+            server.starttls()
+            server.login(self.email, self.password)
+            server.sendmail(self.email, to, msg.as_string())
+            server.quit()
+            QMessageBox.information(self, "Mail", "Mail başarıyla gönderildi!")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Compose Mail", subject)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Mail send failed: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("EmailClient Action", "User interacted with email client")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+import json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QLabel,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Dictionary(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Dictionary - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Arama alanı
+        self.word_input = QLineEdit()
+        self.word_input.setPlaceholderText("Kelime gir")
+        layout.addWidget(self.word_input)
+
+        btn_search = QPushButton("Ara")
+        btn_search.clicked.connect(self.search_word)
+        layout.addWidget(btn_search)
+
+        self.result_label = QLabel("Tanım: ")
+        layout.addWidget(self.result_label)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+        # Basit JSON sözlük
+        self.data = {
+            "python": "Yüksek seviyeli programlama dili.",
+            "qt": "C++ tabanlı GUI framework.",
+            "ai": "Yapay zeka, öğrenen sistemler."
+        }
+
+    def search_word(self):
+        word = self.word_input.text().lower()
+        meaning = self.data.get(word, "Bulunamadı")
+        self.result_label.setText(f"Tanım: {meaning}")
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Search Word", word)
+
+    def new_file(self):
+        self.data.clear()
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Dictionary")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                self.data = json.load(f)
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        if self.current_file:
+            fname = self.current_file
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "JSON Files (*.json)")
+            if not fname:
+                return
+            self.current_file = fname
+
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(self.data, f, indent=2)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Dictionary Action", "User searched dictionary")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+import json, requests
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QPushButton,
+    QLabel, QComboBox, QMessageBox, QFileDialog
+)
+from PyQt6.QtGui import QAction
+
+class Translator(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Translator - Flourescent OS (Web API)")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Çeviri alanı
+        self.text_input = QLineEdit()
+        self.text_input.setPlaceholderText("Çevrilecek metin")
+        layout.addWidget(self.text_input)
+
+        self.lang_box = QComboBox()
+        self.lang_box.addItems(["en", "tr", "de", "fr", "es"])
+        layout.addWidget(self.lang_box)
+
+        btn_translate = QPushButton("Çevir (Web)")
+        btn_translate.clicked.connect(self.translate)
+        layout.addWidget(btn_translate)
+
+        self.result_label = QLabel("Sonuç: ")
+        layout.addWidget(self.result_label)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def translate(self):
+        text = self.text_input.text()
+        target_lang = self.lang_box.currentText()
+        try:
+            response = requests.post(
+                "https://libretranslate.de/translate",
+                data={
+                    "q": text,
+                    "source": "auto",
+                    "target": target_lang,
+                    "format": "text"
+                }
+            )
+            if response.status_code == 200:
+                result = response.json().get("translatedText", "")
+                self.result_label.setText(f"Sonuç: {result}")
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Translate Web", f"{text} -> {result}")
+            else:
+                self.result_label.setText("Çeviri başarısız oldu.")
+        except Exception as e:
+            self.result_label.setText(f"Hata: {e}")
+
+    def new_file(self):
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Translator")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.text_input.setText(data.get("text", ""))
+            self.result_label.setText(data.get("result", "Sonuç: "))
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        data = {"text": self.text_input.text(), "result": self.result_label.text()}
+        if self.current_file:
+            fname = self.current_file
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "JSON Files (*.json)")
+            if not fname:
+                return
+            self.current_file = fname
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Translator Action", "User translated text via web")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import json, requests
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QPushButton,
+    QLabel, QMessageBox, QFileDialog
+)
+from PyQt6.QtGui import QAction
+
+class Weather(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Weather - Flourescent OS (Web API)")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Şehir giriş alanı
+        self.city_input = QLineEdit()
+        self.city_input.setPlaceholderText("Şehir gir")
+        layout.addWidget(self.city_input)
+
+        btn_check = QPushButton("Hava Durumu (Web)")
+        btn_check.clicked.connect(self.check_weather)
+        layout.addWidget(btn_check)
+
+        self.result_label = QLabel("Durum: ")
+        layout.addWidget(self.result_label)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def check_weather(self):
+        city = self.city_input.text().lower()
+        try:
+            api_key = os.getenv("OPENWEATHER_API_KEY", "")  # API anahtarı ortam değişkeninden
+            if not api_key:
+                self.result_label.setText("API anahtarı bulunamadı.")
+                return
+            url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=tr"
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                desc = data["weather"][0]["description"]
+                temp = data["main"]["temp"]
+                result = f"{city.title()}: {desc}, {temp}°C"
+                self.result_label.setText(f"Durum: {result}")
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Weather Check", result)
+            else:
+                self.result_label.setText("Veri alınamadı.")
+        except Exception as e:
+            self.result_label.setText(f"Hata: {e}")
+
+    def new_file(self):
+        self.city_input.clear()
+        self.result_label.setText("Durum: ")
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Weather")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.city_input.setText(data.get("city", ""))
+            self.result_label.setText(data.get("result", "Durum: "))
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        data = {"city": self.city_input.text(), "result": self.result_label.text()}
+        if self.current_file:
+            fname = self.current_file
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "JSON Files (*.json)")
+            if not fname:
+                return
+            self.current_file = fname
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Weather Action", "User checked weather via web")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+import json, requests, xml.etree.ElementTree as ET
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class NewsReader(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("News Reader - Flourescent OS (TR Web)")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        refresh_action = QAction("Yenile", self)
+        refresh_action.triggered.connect(self.load_news)
+        file_menu.addAction(refresh_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Haber listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        btn_load = QPushButton("Haberleri Yükle (TR)")
+        btn_load.clicked.connect(self.load_news)
+        layout.addWidget(btn_load)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def load_news(self):
+        try:
+            sources = [
+                "https://www.mynet.com/haber/rss",
+                "https://www.ntv.com.tr/rss",
+                "https://www.hurriyet.com.tr/rss",
+                "https://www.sozcu.com.tr/rss",
+                "https://www.milliyet.com.tr/rss"
+            ]
+            self.list.clear()
+            for url in sources:
+                try:
+                    response = requests.get(url, timeout=5)
+                    if response.status_code == 200:
+                        root = ET.fromstring(response.content)
+                        items = root.findall(".//item")
+                        for item in items[:3]:  # her kaynaktan ilk 3 haber
+                            title = item.find("title").text
+                            self.list.addItem(title if title else "(Başlık yok)")
+                except Exception as e:
+                    self.list.addItem(f"{url} hata: {e}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Load News", "TR sources loaded")
+        except Exception as e:
+            self.list.clear()
+            self.list.addItem(f"Hata: {e}")
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+        else:
+            QMessageBox.information(self, "Sync", "Kaydedilmiş dosya yok")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("NewsReader Action", "User loaded TR news")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import json, os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QPushButton, QMessageBox
+)
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtGui import QAction
+from PyQt6.QtCore import QUrl
+
+class Maps(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Maps - Flourescent OS (Web)")
+        self.resize(900, 600)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Adres giriş alanı
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("Adres gir (örn: İstanbul)")
+        layout.addWidget(self.url_input)
+
+        btn_go = QPushButton("Git (Google Maps)")
+        btn_go.clicked.connect(self.load_map)
+        layout.addWidget(btn_go)
+
+        self.browser = QWebEngineView()
+        layout.addWidget(self.browser)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def load_map(self):
+        place = self.url_input.text()
+        if place:
+            try:
+                url = QUrl(f"https://www.google.com/maps/search/{place}")
+                self.browser.setUrl(url)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Load Map", place)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Map load failed: {e}")
+
+    def new_file(self):
+        self.url_input.clear()
+        self.browser.setUrl(QUrl("about:blank"))
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Maps")
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+        else:
+            QMessageBox.information(self, "Sync", "Kaydedilmiş dosya yok")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Maps Action", "User searched map")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QPushButton,
+    QTabWidget, QMessageBox, QHBoxLayout, QListWidget
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtCore import QUrl
+
+class Browser(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Tabbed Browser - Flourescent OS")
+        self.resize(1200, 800)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni Sekme", self)
+        new_action.triggered.connect(self.new_tab)
+        file_menu.addAction(new_action)
+
+        bookmark_action = QAction("Yer İmleri", self)
+        bookmark_action.triggered.connect(self.show_bookmarks)
+        file_menu.addAction(bookmark_action)
+
+        history_action = QAction("Geçmiş", self)
+        history_action.triggered.connect(self.show_history)
+        file_menu.addAction(history_action)
+
+        layout.setMenuBar(menubar)
+
+        # URL bar
+        bar_layout = QHBoxLayout()
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("URL gir (örn: https://mynet.com)")
+        bar_layout.addWidget(self.url_input)
+
+        btn_go = QPushButton("Git")
+        btn_go.clicked.connect(self.load_page)
+        bar_layout.addWidget(btn_go)
+
+        btn_bookmark = QPushButton("Yer İmine Ekle")
+        btn_bookmark.clicked.connect(self.add_bookmark)
+        bar_layout.addWidget(btn_bookmark)
+
+        layout.addLayout(bar_layout)
+
+        # Sekmeler
+        self.tabs = QTabWidget()
+        self.tabs.setTabsClosable(True)
+        self.tabs.tabCloseRequested.connect(self.close_tab)
+        layout.addWidget(self.tabs)
+
+        # İlk sekme
+        self.new_tab()
+
+        # Audit ve kaynak butonları
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+
+        # Yer imleri ve geçmiş
+        self.bookmarks = []
+        self.history = []
+
+    def new_tab(self, url="about:blank"):
+        browser = QWebEngineView()
+        browser.setUrl(QUrl(url))
+        index = self.tabs.addTab(browser, "Yeni Sekme")
+        self.tabs.setCurrentIndex(index)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New Tab", url)
+
+    def close_tab(self, index):
+        self.tabs.removeTab(index)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Close Tab", str(index))
+
+    def load_page(self):
+        url = self.url_input.text()
+        if not url.startswith("http"):
+            url = "https://" + url
+        try:
+            current_browser = self.tabs.currentWidget()
+            current_browser.setUrl(QUrl(url))
+            self.tabs.setTabText(self.tabs.currentIndex(), url)
+            self.history.append(url)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Load Page", url)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Page load failed: {e}")
+
+    def add_bookmark(self):
+        url = self.url_input.text()
+        if url:
+            self.bookmarks.append(url)
+            QMessageBox.information(self, "Bookmark", f"{url} yer imlerine eklendi!")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Add Bookmark", url)
+
+    def show_bookmarks(self):
+        dlg = QListWidget()
+        dlg.setWindowTitle("Yer İmleri")
+        for bm in self.bookmarks:
+            dlg.addItem(bm)
+        dlg.show()
+
+    def show_history(self):
+        dlg = QListWidget()
+        dlg.setWindowTitle("Geçmiş")
+        for h in self.history:
+            dlg.addItem(h)
+        dlg.show()
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Browser Action", "User browsed with tabs/bookmarks/history")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtCore import QUrl
+
+import os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtCore import QUrl
+
+class MusicPlayer(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Music Player - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Şarkı Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        layout.setMenuBar(menubar)
+
+        # Playlist
+        self.playlist = QListWidget()
+        layout.addWidget(self.playlist)
+
+        # Kontroller
+        btn_play = QPushButton("▶ Oynat")
+        btn_play.clicked.connect(self.play_song)
+        layout.addWidget(btn_play)
+
+        btn_pause = QPushButton("⏸ Duraklat")
+        btn_pause.clicked.connect(self.pause_song)
+        layout.addWidget(btn_pause)
+
+        btn_stop = QPushButton("⏹ Durdur")
+        btn_stop.clicked.connect(self.stop_song)
+        layout.addWidget(btn_stop)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+        # Media player
+        self.player = QMediaPlayer()
+        self.audio_output = QAudioOutput()
+        self.player.setAudioOutput(self.audio_output)
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Şarkı Aç", "", "Audio Files (*.mp3 *.wav)")
+        if fname:
+            self.playlist.addItem(fname)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open Song", fname)
+
+    def play_song(self):
+        current = self.playlist.currentItem()
+        if current:
+            url = QUrl.fromLocalFile(current.text())
+            self.player.setSource(url)
+            self.player.play()
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Play Song", current.text())
+        else:
+            QMessageBox.warning(self, "Play", "Lütfen bir şarkı seçin!")
+
+    def pause_song(self):
+        self.player.pause()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Pause Song", "Paused")
+
+    def stop_song(self):
+        self.player.stop()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Stop Song", "Stopped")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("MusicPlayer Action", "User interacted with music player")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+import os, shutil, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class FileManager(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("File Manager - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Klasör Aç", self)
+        open_action.triggered.connect(self.open_folder)
+        file_menu.addAction(open_action)
+
+        layout.setMenuBar(menubar)
+
+        # Dosya listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        # Kontroller
+        btn_delete = QPushButton("Sil")
+        btn_delete.clicked.connect(self.delete_file)
+        layout.addWidget(btn_delete)
+
+        btn_copy = QPushButton("Kopyala")
+        btn_copy.clicked.connect(self.copy_file)
+        layout.addWidget(btn_copy)
+
+        btn_sync = QPushButton("Senkronize Et")
+        btn_sync.clicked.connect(self.sync_file)
+        layout.addWidget(btn_sync)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_folder = None
+
+    def open_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, "Klasör Aç")
+        if folder:
+            self.current_folder = folder
+            self.list.clear()
+            try:
+                for f in os.listdir(folder):
+                    self.list.addItem(f)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Open Folder", folder)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Klasör açılamadı: {e}")
+
+    def delete_file(self):
+        current = self.list.currentItem()
+        if current and self.current_folder:
+            path = os.path.join(self.current_folder, current.text())
+            try:
+                os.remove(path)
+                self.list.takeItem(self.list.currentRow())
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Delete File", path)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Silinemedi: {e}")
+
+    def copy_file(self):
+        current = self.list.currentItem()
+        if current and self.current_folder:
+            src = os.path.join(self.current_folder, current.text())
+            dest, _ = QFileDialog.getSaveFileName(self, "Kopya Kaydet", current.text())
+            if dest:
+                try:
+                    shutil.copy(src, dest)
+                    if self.kernel and hasattr(self.kernel, "audit_manager"):
+                        self.kernel.audit_manager.record("Copy File", f"{src} -> {dest}")
+                except Exception as e:
+                    QMessageBox.warning(self, "Error", f"Kopyalanamadı: {e}")
+
+    def sync_file(self):
+        current = self.list.currentItem()
+        if current and self.current_folder and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            path = os.path.join(self.current_folder, current.text())
+            try:
+                self.kernel.file_sync_manager.sync_file(path)
+                self.kernel.audit_manager.record("Sync File", path)
+                QMessageBox.information(self, "Sync", f"{path} senkronize edildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Senkronizasyon hatası: {e}")
+        else:
+            QMessageBox.information(self, "Sync", "Dosya seçilmedi veya sync desteklenmiyor")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("FileManager Action", "User managed files")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, subprocess
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QTextEdit,
+    QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Terminal(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Terminal - Flourescent OS")
+        self.resize(900, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        clear_action = QAction("Temizle", self)
+        clear_action.triggered.connect(self.clear_output)
+        file_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Komut giriş alanı
+        self.cmd_input = QLineEdit()
+        self.cmd_input.setPlaceholderText("Komut gir (örn: dir / ls)")
+        layout.addWidget(self.cmd_input)
+
+        btn_run = QPushButton("Çalıştır")
+        btn_run.clicked.connect(self.run_command)
+        layout.addWidget(btn_run)
+
+        # Çıktı alanı
+        self.output = QTextEdit()
+        self.output.setReadOnly(True)
+        layout.addWidget(self.output)
+
+        # Audit ve kaynak butonları
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+
+    def run_command(self):
+        cmd = self.cmd_input.text()
+        if not cmd.strip():
+            QMessageBox.warning(self, "Komut", "Lütfen bir komut girin!")
+            return
+        try:
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            self.output.append(f"$ {cmd}\n{result.stdout}{result.stderr}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Run Command", cmd)
+        except Exception as e:
+            self.output.append(f"Hata: {e}")
+
+    def clear_output(self):
+        self.output.clear()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Output", "Terminal")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Terminal Action", "User executed command")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import os, subprocess
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QPushButton,
+    QListWidget, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class PackageManager(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Package Manager - Flourescent OS")
+        self.resize(700, 500)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("İşlem")
+
+        refresh_action = QAction("Yüklü Paketleri Yenile", self)
+        refresh_action.triggered.connect(self.refresh_packages)
+        file_menu.addAction(refresh_action)
+
+        layout.setMenuBar(menubar)
+
+        # Paket listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        # Paket adı giriş
+        self.pkg_input = QLineEdit()
+        self.pkg_input.setPlaceholderText("Paket adı gir (örn: numpy)")
+        layout.addWidget(self.pkg_input)
+
+        # Kontroller
+        btn_install = QPushButton("Yükle")
+        btn_install.clicked.connect(self.install_package)
+        layout.addWidget(btn_install)
+
+        btn_update = QPushButton("Güncelle")
+        btn_update.clicked.connect(self.update_package)
+        layout.addWidget(btn_update)
+
+        btn_remove = QPushButton("Kaldır")
+        btn_remove.clicked.connect(self.remove_package)
+        layout.addWidget(btn_remove)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+    def refresh_packages(self):
+        try:
+            result = subprocess.run(["pip", "list"], capture_output=True, text=True)
+            self.list.clear()
+            lines = result.stdout.splitlines()
+            for line in lines[2:]:  # ilk iki satır başlık
+                self.list.addItem(line)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Refresh Packages", "Listed installed packages")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Paket listesi alınamadı: {e}")
+
+    def install_package(self):
+        pkg = self.pkg_input.text().strip()
+        if pkg:
+            try:
+                subprocess.run(["pip", "install", pkg], check=True)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Install Package", pkg)
+                QMessageBox.information(self, "Install", f"{pkg} yüklendi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"{pkg} yüklenemedi: {e}")
+
+    def update_package(self):
+        pkg = self.pkg_input.text().strip()
+        if pkg:
+            try:
+                subprocess.run(["pip", "install", "--upgrade", pkg], check=True)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Update Package", pkg)
+                QMessageBox.information(self, "Update", f"{pkg} güncellendi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"{pkg} güncellenemedi: {e}")
+
+    def remove_package(self):
+        pkg = self.pkg_input.text().strip()
+        if pkg:
+            try:
+                subprocess.run(["pip", "uninstall", "-y", pkg], check=True)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Remove Package", pkg)
+                QMessageBox.information(self, "Remove", f"{pkg} kaldırıldı!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"{pkg} kaldırılamadı: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("PackageManager Action", "User managed packages")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+import os, subprocess, sys
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QFileDialog, QTextEdit, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class ScriptRunner(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Script Runner - Flourescent OS")
+        self.resize(800, 500)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Script Aç", self)
+        open_action.triggered.connect(self.open_script)
+        file_menu.addAction(open_action)
+
+        layout.setMenuBar(menubar)
+
+        # Çıktı alanı
+        self.output = QTextEdit()
+        self.output.setReadOnly(True)
+        layout.addWidget(self.output)
+
+        # Kontroller
+        btn_run = QPushButton("Çalıştır")
+        btn_run.clicked.connect(self.run_script)
+        layout.addWidget(btn_run)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_script = None
+
+    def open_script(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Script Aç", "", "Scripts (*.py *.sh *.bat)")
+        if fname:
+            self.current_script = fname
+            self.output.append(f"Seçilen script: {fname}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open Script", fname)
+
+    def run_script(self):
+        if self.current_script:
+            try:
+                # Python script ise güvenli çalıştırma
+                if self.current_script.endswith(".py"):
+                    result = subprocess.run([sys.executable, self.current_script], capture_output=True, text=True)
+                else:
+                    result = subprocess.run(self.current_script, shell=True, capture_output=True, text=True)
+
+                self.output.append(f"$ {self.current_script}\n{result.stdout}{result.stderr}")
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Run Script", self.current_script)
+            except Exception as e:
+                self.output.append(f"Hata: {e}")
+        else:
+            QMessageBox.warning(self, "Çalıştır", "Önce bir script seçin!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("ScriptRunner Action", "User executed script")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QComboBox, QSlider, QMessageBox
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtCore import Qt
+
+class ControlPanel(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Control Panel - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Ayarlar")
+
+        reset_action = QAction("Varsayılanlara Dön", self)
+        reset_action.triggered.connect(self.reset_defaults)
+        file_menu.addAction(reset_action)
+
+        layout.setMenuBar(menubar)
+
+        # Tema seçimi
+        self.theme_box = QComboBox()
+        self.theme_box.addItems(["Aydınlık", "Karanlık", "Retro"])
+        layout.addWidget(self.theme_box)
+
+        btn_theme = QPushButton("Tema Uygula")
+        btn_theme.clicked.connect(self.apply_theme)
+        layout.addWidget(btn_theme)
+
+        # Ses kontrolü
+        self.volume_slider = QSlider(Qt.Orientation.Horizontal)
+        self.volume_slider.setRange(0, 100)
+        self.volume_slider.setValue(50)
+        layout.addWidget(self.volume_slider)
+
+        btn_volume = QPushButton("Ses Ayarla")
+        btn_volume.clicked.connect(self.set_volume)
+        layout.addWidget(btn_volume)
+
+        # Güç seçenekleri
+        btn_shutdown = QPushButton("Kapat")
+        btn_shutdown.clicked.connect(self.shutdown)
+        layout.addWidget(btn_shutdown)
+
+        btn_restart = QPushButton("Yeniden Başlat")
+        btn_restart.clicked.connect(self.restart)
+        layout.addWidget(btn_restart)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+    def apply_theme(self):
+        theme = self.theme_box.currentText()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Apply Theme", theme)
+        QMessageBox.information(self, "Tema", f"{theme} teması uygulandı!")
+
+    def set_volume(self):
+        vol = self.volume_slider.value()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Set Volume", str(vol))
+        QMessageBox.information(self, "Ses", f"Ses seviyesi {vol}% olarak ayarlandı.")
+
+    def shutdown(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Shutdown", "System shutting down")
+        QMessageBox.information(self, "Güç", "Sistem kapatılıyor...")
+
+    def restart(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Restart", "System restarting")
+        QMessageBox.information(self, "Güç", "Sistem yeniden başlatılıyor...")
+
+    def reset_defaults(self):
+        self.theme_box.setCurrentIndex(0)
+        self.volume_slider.setValue(50)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Reset Defaults", "Settings reset")
+        QMessageBox.information(self, "Ayarlar", "Varsayılan ayarlara dönüldü.")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("ControlPanel Action", "User changed settings")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QCalendarWidget,
+    QPushButton, QLineEdit, QListWidget, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class CalendarApp(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Calendar - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Etkinlik")
+
+        clear_action = QAction("Tümünü Temizle", self)
+        clear_action.triggered.connect(self.clear_events)
+        file_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Takvim widget
+        self.calendar = QCalendarWidget()
+        layout.addWidget(self.calendar)
+
+        # Etkinlik giriş alanı
+        self.event_input = QLineEdit()
+        self.event_input.setPlaceholderText("Etkinlik gir (örn: Matematik dersi)")
+        layout.addWidget(self.event_input)
+
+        btn_add = QPushButton("Etkinlik Ekle")
+        btn_add.clicked.connect(self.add_event)
+        layout.addWidget(btn_add)
+
+        # Etkinlik listesi
+        self.event_list = QListWidget()
+        layout.addWidget(self.event_list)
+
+        btn_delete = QPushButton("Seçili Etkinliği Sil")
+        btn_delete.clicked.connect(self.delete_event)
+        layout.addWidget(btn_delete)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.events = {}
+
+    def add_event(self):
+        date = self.calendar.selectedDate().toString("yyyy-MM-dd")
+        event = self.event_input.text().strip()
+        if event:
+            if date not in self.events:
+                self.events[date] = []
+            self.events[date].append(event)
+            self.event_list.addItem(f"{date}: {event}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Add Event", f"{date} - {event}")
+
+    def delete_event(self):
+        current = self.event_list.currentItem()
+        if current:
+            text = current.text()
+            self.event_list.takeItem(self.event_list.currentRow())
+            try:
+                date, event = text.split(": ", 1)
+                if date in self.events and event in self.events[date]:
+                    self.events[date].remove(event)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Delete Event", text)
+            except ValueError:
+                QMessageBox.warning(self, "Error", "Etkinlik formatı hatalı!")
+
+    def clear_events(self):
+        self.events.clear()
+        self.event_list.clear()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Events", "All events cleared")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Calendar Action", "User managed calendar")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QTextEdit,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Notepad(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Notepad - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Metin alanı
+        self.editor = QTextEdit()
+        layout.addWidget(self.editor)
+
+        # Audit ve kaynak butonları
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def new_file(self):
+        self.editor.clear()
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Notepad")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "Text Files (*.txt)")
+        if fname:
+            try:
+                with open(fname, "r", encoding="utf-8") as f:
+                    self.editor.setText(f.read())
+                self.current_file = fname
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Open File", fname)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Dosya açılamadı: {e}")
+
+    def save_file(self):
+        if not self.current_file:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "Text Files (*.txt)")
+            if fname:
+                self.current_file = fname
+        if self.current_file:
+            try:
+                with open(self.current_file, "w", encoding="utf-8") as f:
+                    f.write(self.editor.toPlainText())
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Save File", self.current_file)
+                QMessageBox.information(self, "Kaydet", f"{self.current_file} kaydedildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Kaydedilemedi: {e}")
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            try:
+                self.kernel.file_sync_manager.sync_file(self.current_file)
+                self.kernel.audit_manager.record("Sync File", self.current_file)
+                QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Senkronizasyon hatası: {e}")
+        else:
+            QMessageBox.information(self, "Sync", "Dosya seçilmedi veya sync desteklenmiyor")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Notepad Action", "User edited notes")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+import os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QFileDialog, QListWidget, QLabel, QMessageBox
+)
+from PyQt6.QtGui import QAction, QPixmap
+from PyQt6.QtCore import Qt
+
+class Gallery(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Gallery - Flourescent OS")
+        self.resize(1000, 700)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Klasör Aç", self)
+        open_action.triggered.connect(self.open_folder)
+        file_menu.addAction(open_action)
+
+        layout.setMenuBar(menubar)
+
+        # Görsel listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        # Görsel alanı
+        self.label = QLabel("Resim seçilmedi")
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setScaledContents(False)
+        layout.addWidget(self.label)
+
+        # Kontroller
+        btn_show = QPushButton("Göster")
+        btn_show.clicked.connect(self.show_image)
+        layout.addWidget(btn_show)
+
+        btn_slideshow = QPushButton("Slayt Gösterisi")
+        btn_slideshow.clicked.connect(self.slideshow)
+        layout.addWidget(btn_slideshow)
+
+        btn_sync = QPushButton("Senkronize Et")
+        btn_sync.clicked.connect(self.sync_image)
+        layout.addWidget(btn_sync)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_folder = None
+        self.images = []
+        self.current_index = 0
+
+    def open_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, "Klasör Aç")
+        if folder:
+            self.current_folder = folder
+            self.list.clear()
+            try:
+                self.images = [f for f in os.listdir(folder) if f.lower().endswith((".png", ".jpg", ".jpeg", ".bmp"))]
+                for img in self.images:
+                    self.list.addItem(img)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Open Gallery Folder", folder)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Klasör açılamadı: {e}")
+
+    def show_image(self):
+        current = self.list.currentItem()
+        if current and self.current_folder:
+            path = os.path.join(self.current_folder, current.text())
+            if os.path.exists(path):
+                pixmap = QPixmap(path)
+                if not pixmap.isNull():
+                    scaled = pixmap.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    self.label.setPixmap(scaled)
+                    if self.kernel and hasattr(self.kernel, "audit_manager"):
+                        self.kernel.audit_manager.record("Show Image", path)
+                else:
+                    QMessageBox.warning(self, "Error", "Resim yüklenemedi!")
+            else:
+                QMessageBox.warning(self, "Error", "Dosya bulunamadı!")
+
+    def slideshow(self):
+        if self.images and self.current_folder:
+            self.current_index = (self.current_index + 1) % len(self.images)
+            path = os.path.join(self.current_folder, self.images[self.current_index])
+            pixmap = QPixmap(path)
+            if not pixmap.isNull():
+                scaled = pixmap.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.label.setPixmap(scaled)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Slideshow Next", path)
+
+    def sync_image(self):
+        current = self.list.currentItem()
+        if current and self.current_folder and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            path = os.path.join(self.current_folder, current.text())
+            try:
+                self.kernel.file_sync_manager.sync_file(path)
+                self.kernel.audit_manager.record("Sync Image", path)
+                QMessageBox.information(self, "Sync", f"{path} senkronize edildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Senkronizasyon hatası: {e}")
+        else:
+            QMessageBox.information(self, "Sync", "Dosya seçilmedi veya sync desteklenmiyor")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Gallery Action", "User browsed gallery")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QColorDialog, QFileDialog, QMessageBox, QLabel
+)
+from PyQt6.QtGui import QAction, QPainter, QPen, QPixmap
+from PyQt6.QtCore import Qt, QPoint
+
+class PaintApp(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Paint - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_image)
+        file_menu.addAction(save_action)
+
+        layout.setMenuBar(menubar)
+
+        # Çizim alanı
+        self.canvas = QPixmap(800, 600)
+        self.canvas.fill(Qt.GlobalColor.white)
+
+        self.label = QLabel()
+        self.label.setPixmap(self.canvas)
+        self.label.setFixedSize(800, 600)
+        layout.addWidget(self.label)
+
+        # Kontroller
+        btn_color = QPushButton("Renk Seç")
+        btn_color.clicked.connect(self.choose_color)
+        layout.addWidget(btn_color)
+
+        btn_clear = QPushButton("Temizle")
+        btn_clear.clicked.connect(self.clear_canvas)
+        layout.addWidget(btn_clear)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+        # Çizim parametreleri
+        self.drawing = False
+        self.last_point = QPoint()
+        self.pen_color = Qt.GlobalColor.black
+        self.pen_width = 3
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drawing = True
+            self.last_point = event.position().toPoint()
+
+    def mouseMoveEvent(self, event):
+        if (event.buttons() & Qt.MouseButton.LeftButton) and self.drawing:
+            painter = QPainter(self.canvas)
+            pen = QPen(self.pen_color, self.pen_width, Qt.PenStyle.SolidLine)
+            painter.setPen(pen)
+            painter.drawLine(self.last_point, event.position().toPoint())
+            self.last_point = event.position().toPoint()
+            self.label.setPixmap(self.canvas)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drawing = False
+
+    def choose_color(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.pen_color = color
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Choose Color", str(color.name()))
+
+    def clear_canvas(self):
+        self.canvas.fill(Qt.GlobalColor.white)
+        self.label.setPixmap(self.canvas)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Canvas", "Canvas cleared")
+
+    def save_image(self):
+        fname, _ = QFileDialog.getSaveFileName(self, "Resmi Kaydet", "", "PNG Files (*.png)")
+        if fname:
+            try:
+                self.canvas.save(fname)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Save Image", fname)
+                QMessageBox.information(self, "Kaydet", f"{fname} kaydedildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Kaydedilemedi: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Paint Action", "User drew on canvas")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, ast
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit,
+    QPushButton, QLabel, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Calculator(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Calculator - Flourescent OS")
+        self.resize(400, 300)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("İşlem")
+
+        clear_action = QAction("Temizle", self)
+        clear_action.triggered.connect(self.clear_input)
+        file_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Giriş alanı
+        self.input = QLineEdit()
+        self.input.setPlaceholderText("İşlem gir (örn: 5+3*2)")
+        layout.addWidget(self.input)
+
+        # Sonuç etiketi
+        self.result_label = QLabel("Sonuç: ")
+        layout.addWidget(self.result_label)
+
+        # Kontroller
+        btn_calc = QPushButton("Hesapla")
+        btn_calc.clicked.connect(self.calculate)
+        layout.addWidget(btn_calc)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+
+    def safe_eval(self, expr):
+        """Basit matematiksel ifadeleri güvenli şekilde değerlendirir."""
+        try:
+            node = ast.parse(expr, mode='eval')
+            allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp,
+                             ast.Num, ast.Add, ast.Sub, ast.Mult,
+                             ast.Div, ast.Pow, ast.Mod, ast.USub, ast.Load)
+            for n in ast.walk(node):
+                if not isinstance(n, allowed_nodes):
+                    raise ValueError("İzin verilmeyen ifade")
+            return eval(compile(node, "<string>", "eval"))
+        except Exception as e:
+            raise ValueError(f"Hatalı ifade: {e}")
+
+    def calculate(self):
+        expr = self.input.text()
+        try:
+            result = self.safe_eval(expr)
+            self.result_label.setText(f"Sonuç: {result}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Calculate", expr)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Hesaplama hatası: {e}")
+
+    def clear_input(self):
+        self.input.clear()
+        self.result_label.setText("Sonuç: ")
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Input", "Calculator")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Calculator Action", "User calculated expression")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+import os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtMultimediaWidgets import QVideoWidget
+from PyQt6.QtCore import QUrl
+
+class VideoPlayer(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Video Player - Flourescent OS")
+        self.resize(900, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Video Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        layout.setMenuBar(menubar)
+
+        # Video alanı
+        self.video_widget = QVideoWidget()
+        layout.addWidget(self.video_widget)
+
+        # Kontroller
+        btn_play = QPushButton("▶ Oynat")
+        btn_play.clicked.connect(self.play_video)
+        layout.addWidget(btn_play)
+
+        btn_pause = QPushButton("⏸ Duraklat")
+        btn_pause.clicked.connect(self.pause_video)
+        layout.addWidget(btn_pause)
+
+        btn_stop = QPushButton("⏹ Durdur")
+        btn_stop.clicked.connect(self.stop_video)
+        layout.addWidget(btn_stop)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+        # Media player
+        self.player = QMediaPlayer()
+        self.audio_output = QAudioOutput()
+        self.player.setAudioOutput(self.audio_output)
+        self.player.setVideoOutput(self.video_widget)
+
+        self.current_file = None
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Video Aç", "", "Video Files (*.mp4 *.avi *.mkv)")
+        if fname:
+            try:
+                self.current_file = fname
+                self.player.setSource(QUrl.fromLocalFile(fname))
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Open Video", fname)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Video açılamadı: {e}")
+
+    def play_video(self):
+        if self.current_file:
+            try:
+                self.player.play()
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Play Video", self.current_file)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Oynatma hatası: {e}")
+
+    def pause_video(self):
+        try:
+            self.player.pause()
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Pause Video", "Paused")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Duraklatma hatası: {e}")
+
+    def stop_video(self):
+        try:
+            self.player.stop()
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Stop Video", "Stopped")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Durdurma hatası: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("VideoPlayer Action", "User interacted with video player")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit,
+    QPushButton, QListWidget, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class ChatClient(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Chat Client - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Sohbet")
+
+        clear_action = QAction("Geçmişi Temizle", self)
+        clear_action.triggered.connect(self.clear_chat)
+        file_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Sohbet listesi
+        self.chat_list = QListWidget()
+        layout.addWidget(self.chat_list)
+
+        # Mesaj giriş alanı
+        self.msg_input = QLineEdit()
+        self.msg_input.setPlaceholderText("Mesaj yaz...")
+        layout.addWidget(self.msg_input)
+
+        # Kontroller
+        btn_send = QPushButton("Gönder")
+        btn_send.clicked.connect(self.send_message)
+        layout.addWidget(btn_send)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.chat_history = []
+
+    def send_message(self):
+        msg = self.msg_input.text().strip()
+        if msg:
+            self.chat_list.addItem(f"Sen: {msg}")
+            self.chat_history.append(("Sen", msg))
+            self.msg_input.clear()
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Send Message", msg)
+
+    def clear_chat(self):
+        self.chat_list.clear()
+        self.chat_history.clear()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Chat", "Chat history cleared")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("ChatClient Action", "User interacted with chat client")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class GameHub(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Game Hub - Flourescent OS")
+        self.resize(700, 500)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Oyun")
+
+        refresh_action = QAction("Oyunları Yenile", self)
+        refresh_action.triggered.connect(self.refresh_games)
+        file_menu.addAction(refresh_action)
+
+        layout.setMenuBar(menubar)
+
+        # Oyun listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        # Kontroller
+        btn_start = QPushButton("Başlat")
+        btn_start.clicked.connect(self.start_game)
+        layout.addWidget(btn_start)
+
+        btn_stop = QPushButton("Durdur")
+        btn_stop.clicked.connect(self.stop_game)
+        layout.addWidget(btn_stop)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.games = ["Snake", "Tetris", "Minesweeper", "Pong"]
+        self.refresh_games()
+
+    def refresh_games(self):
+        self.list.clear()
+        for g in self.games:
+            self.list.addItem(g)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Refresh Games", "Game list refreshed")
+
+    def start_game(self):
+        current = self.list.currentItem()
+        if current:
+            game = current.text()
+            QMessageBox.information(self, "Game", f"{game} başlatıldı!")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Start Game", game)
+
+    def stop_game(self):
+        current = self.list.currentItem()
+        if current:
+            game = current.text()
+            QMessageBox.information(self, "Game", f"{game} durduruldu!")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Stop Game", game)
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("GameHub Action", "User interacted with game hub")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QLineEdit, QMessageBox, QFileDialog
+)
+from PyQt6.QtGui import QAction
+
+class MusicStudio(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Music Studio - Flourescent OS")
+        self.resize(800, 500)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Müzik")
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_track)
+        file_menu.addAction(save_action)
+
+        layout.setMenuBar(menubar)
+
+        # Nota listesi
+        self.notes_list = QListWidget()
+        layout.addWidget(self.notes_list)
+
+        # Nota giriş alanı
+        self.note_input = QLineEdit()
+        self.note_input.setPlaceholderText("Nota gir (örn: C, D#, F)")
+        layout.addWidget(self.note_input)
+
+        # Kontroller
+        btn_add = QPushButton("Nota Ekle")
+        btn_add.clicked.connect(self.add_note)
+        layout.addWidget(btn_add)
+
+        btn_play = QPushButton("Çal")
+        btn_play.clicked.connect(self.play_track)
+        layout.addWidget(btn_play)
+
+        btn_stop = QPushButton("Durdur")
+        btn_stop.clicked.connect(self.stop_track)
+        layout.addWidget(btn_stop)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.track = []
+
+    def add_note(self):
+        note = self.note_input.text().strip()
+        if note:
+            self.notes_list.addItem(note)
+            self.track.append(note)
+            self.note_input.clear()
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Add Note", note)
+
+    def play_track(self):
+        if self.track:
+            QMessageBox.information(self, "Play", f"Parça çalınıyor: {' '.join(self.track)}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Play Track", str(self.track))
+
+    def stop_track(self):
+        QMessageBox.information(self, "Stop", "Parça durduruldu")
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Stop Track", "Stopped")
+
+    def save_track(self):
+        fname, _ = QFileDialog.getSaveFileName(self, "Parçayı Kaydet", "", "Text Files (*.txt)")
+        if fname:
+            try:
+                with open(fname, "w", encoding="utf-8") as f:
+                    f.write(" ".join(self.track))
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Save Track", fname)
+                QMessageBox.information(self, "Kaydet", f"Parça {fname} olarak kaydedildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Kaydedilemedi: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("MusicStudio Action", "User composed music")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QFileDialog, QLabel, QMessageBox
+)
+from PyQt6.QtGui import QAction, QPixmap, QImage, QTransform
+from PyQt6.QtCore import Qt
+
+class PhotoEditor(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Photo Editor - Flourescent OS")
+        self.resize(900, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Resim Aç", self)
+        open_action.triggered.connect(self.open_image)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_image)
+        file_menu.addAction(save_action)
+
+        layout.setMenuBar(menubar)
+
+        # Görsel alanı
+        self.label = QLabel("Resim yüklenmedi")
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setScaledContents(True)
+        layout.addWidget(self.label)
+
+        # Kontroller
+        btn_rotate = QPushButton("Döndür")
+        btn_rotate.clicked.connect(self.rotate_image)
+        layout.addWidget(btn_rotate)
+
+        btn_crop = QPushButton("Kırp")
+        btn_crop.clicked.connect(self.crop_image)
+        layout.addWidget(btn_crop)
+
+        btn_filter = QPushButton("Filtre Uygula (Grayscale)")
+        btn_filter.clicked.connect(self.apply_filter)
+        layout.addWidget(btn_filter)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_file = None
+        self.image = None
+
+    def open_image(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Resim Aç", "", "Images (*.png *.jpg *.jpeg *.bmp)")
+        if fname:
+            try:
+                self.image = QPixmap(fname)
+                if not self.image.isNull():
+                    self.label.setPixmap(self.image)
+                    self.current_file = fname
+                    if self.kernel and hasattr(self.kernel, "audit_manager"):
+                        self.kernel.audit_manager.record("Open Image", fname)
+                else:
+                    QMessageBox.warning(self, "Error", "Resim yüklenemedi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Resim açılamadı: {e}")
+
+    def save_image(self):
+        if self.image:
+            fname, _ = QFileDialog.getSaveFileName(self, "Resmi Kaydet", "", "PNG Files (*.png)")
+            if fname:
+                try:
+                    self.image.save(fname)
+                    if self.kernel and hasattr(self.kernel, "audit_manager"):
+                        self.kernel.audit_manager.record("Save Image", fname)
+                    QMessageBox.information(self, "Kaydet", f"{fname} kaydedildi!")
+                except Exception as e:
+                    QMessageBox.warning(self, "Error", f"Kaydedilemedi: {e}")
+
+    def rotate_image(self):
+        if self.image:
+            try:
+                transform = QTransform().rotate(90)
+                rotated = self.image.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+                self.image = rotated
+                self.label.setPixmap(self.image)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Rotate Image", "90 degrees")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Döndürme hatası: {e}")
+
+    def crop_image(self):
+        if self.image:
+            try:
+                rect = self.image.rect().adjusted(50, 50, -50, -50)
+                cropped = self.image.copy(rect)
+                self.image = cropped
+                self.label.setPixmap(self.image)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Crop Image", "Cropped 50px margins")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Kırpma hatası: {e}")
+
+    def apply_filter(self):
+        if self.image:
+            try:
+                img = self.image.toImage().convertToFormat(QImage.Format.Format_Grayscale8)
+                self.image = QPixmap.fromImage(img)
+                self.label.setPixmap(self.image)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Apply Filter", "Grayscale")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Filtre uygulanamadı: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("PhotoEditor Action", "User edited photo")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import subprocess
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit,
+    QTextEdit, QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class TerminalEmulator(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Terminal Emulator - Flourescent OS")
+        self.resize(800, 500)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Terminal")
+
+        clear_action = QAction("Temizle", self)
+        clear_action.triggered.connect(self.clear_output)
+        file_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Çıktı alanı
+        self.output = QTextEdit()
+        self.output.setReadOnly(True)
+        layout.addWidget(self.output)
+
+        # Komut giriş alanı
+        self.cmd_input = QLineEdit()
+        self.cmd_input.setPlaceholderText("Komut gir (örn: dir / ls)")
+        layout.addWidget(self.cmd_input)
+
+        # Kontroller
+        btn_run = QPushButton("Çalıştır")
+        btn_run.clicked.connect(self.run_command)
+        layout.addWidget(btn_run)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+    def run_command(self):
+        cmd = self.cmd_input.text().strip()
+        if not cmd:
+            QMessageBox.warning(self, "Komut", "Lütfen bir komut girin!")
+            return
+        try:
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            self.output.append(f"$ {cmd}\n{result.stdout}{result.stderr}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Run Command", cmd)
+        except Exception as e:
+            self.output.append(f"Hata: {e}")
+
+    def clear_output(self):
+        self.output.clear()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Output", "Terminal cleared")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("TerminalEmulator Action", "User executed terminal command")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+
+import psutil
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLabel,
+    QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtCore import QTimer
+
+class SystemMonitor(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("System Monitor - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("İzleme")
+
+        refresh_action = QAction("Yenile", self)
+        refresh_action.triggered.connect(self.update_status)
+        file_menu.addAction(refresh_action)
+
+        layout.setMenuBar(menubar)
+
+        # Etiketler
+        self.cpu_label = QLabel("CPU: %")
+        layout.addWidget(self.cpu_label)
+
+        self.ram_label = QLabel("RAM: %")
+        layout.addWidget(self.ram_label)
+
+        self.disk_label = QLabel("Disk: %")
+        layout.addWidget(self.disk_label)
+
+        # Kontroller
+        btn_refresh = QPushButton("Durumu Yenile")
+        btn_refresh.clicked.connect(self.update_status)
+        layout.addWidget(btn_refresh)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+        # Periyodik güncelleme için timer
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_status)
+        self.timer.start(2000)  # 2 saniyede bir güncelle
+
+        self.update_status()
+
+    def update_status(self):
+        try:
+            cpu = psutil.cpu_percent()
+            ram = psutil.virtual_memory().percent
+            disk = psutil.disk_usage('/').percent
+
+            self.cpu_label.setText(f"CPU: {cpu}%")
+            self.ram_label.setText(f"RAM: {ram}%")
+            self.disk_label.setText(f"Disk: {disk}%")
+
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Update Status", f"CPU {cpu}%, RAM {ram}%, Disk {disk}%")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Durum alınamadı: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("SystemMonitor Action", "User checked system resources")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+import os, requests
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QLabel, QListWidget,
+    QPushButton, QMessageBox, QProgressBar, QTextEdit
+)
+
+REPO_URL = "https://api.github.com/repos/aydintepeemlak3867-cloud/FlourescentOS-3Store/contents"
+DOWNLOAD_DIR = "DownloadedAppsStuff"
+
+class FlourescentMarket(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("FlourescentOS Advanced Store")
+        self.resize(700, 600)
+
+        layout = QVBoxLayout()
+        self.status = QLabel("🔄 Connecting to Store...")
+        layout.addWidget(self.status)
+
+        self.app_list = QListWidget()
+        self.app_list.itemClicked.connect(self.show_details)
+        layout.addWidget(self.app_list)
+
+        self.install_btn = QPushButton("⬇️ Install Selected App")
+        self.install_btn.clicked.connect(self.install_app)
+        layout.addWidget(self.install_btn)
+
+        self.details_label = QLabel("ℹ️ App details will appear here")
+        layout.addWidget(self.details_label)
+
+        self.progress = QProgressBar()
+        layout.addWidget(self.progress)
+
+        # Yorum alanı
+        self.review_input = QTextEdit()
+        self.review_input.setPlaceholderText("Yorum yaz...")
+        layout.addWidget(self.review_input)
+
+        self.submit_review_btn = QPushButton("💬 Submit Review")
+        self.submit_review_btn.clicked.connect(self.submit_review)
+        layout.addWidget(self.submit_review_btn)
+
+        self.reviews_label = QLabel("📑 Reviews will appear here")
+        layout.addWidget(self.reviews_label)
+
+        self.setLayout(layout)
+        self.pyapps = {}
+        self.reviews = {}
+        self.load_apps()
+
+    def load_apps(self):
+        try:
+            response = requests.get(REPO_URL, timeout=5)
+            if response.status_code == 200:
+                files = response.json()
+                pyapps = [f for f in files if f['name'].endswith('.PyApp')]
+                if pyapps:
+                    self.status.setText("✅ Store Online")
+                    for app in pyapps:
+                        self.app_list.addItem(app['name'])
+                        self.pyapps[app['name']] = app
+                        self.reviews[app['name']] = []
+                else:
+                    self.status.setText("❌ No Apps Found")
+            else:
+                self.status.setText("⚠️ Store Error")
+        except requests.exceptions.RequestException:
+            self.status.setText("⚠️ Offline or No Data")
+
+    def show_details(self, item):
+        app_name = item.text()
+        app_info = self.pyapps[app_name]
+        details = f"📦 {app_name}\nSize: {app_info.get('size', 'Unknown')} bytes\nPath: {app_info['path']}"
+        self.details_label.setText(details)
+        if self.reviews[app_name]:
+            self.reviews_label.setText("📑 Reviews:\n" + "\n".join(self.reviews[app_name]))
+        else:
+            self.reviews_label.setText("📑 No reviews yet")
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("View App Details", app_name)
+
+    def install_app(self):
+        selected = self.app_list.currentItem()
+        if selected:
+            app_name = selected.text()
+            app_info = self.pyapps[app_name]
+            url = app_info['download_url']
+            os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+            path = os.path.join(DOWNLOAD_DIR, app_name)
+            try:
+                response = requests.get(url, timeout=10, stream=True)
+                total = int(response.headers.get('content-length', 0))
+                self.progress.setValue(0)
+                with open(path, 'wb') as f:
+                    downloaded = 0
+                    for chunk in response.iter_content(1024):
+                        if chunk:
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            if total > 0:
+                                self.progress.setValue(int(downloaded * 100 / total))
+                QMessageBox.information(self, "Install", f"{app_name} installed successfully!")
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Install App", app_name)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to install {app_name}: {e}")
+
+    def submit_review(self):
+        selected = self.app_list.currentItem()
+        if selected:
+            app_name = selected.text()
+            review = self.review_input.toPlainText().strip()
+            if review:
+                self.reviews[app_name].append(review)
+                self.review_input.clear()
+                self.reviews_label.setText("📑 Reviews:\n" + "\n".join(self.reviews[app_name]))
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Submit Review", f"{app_name}: {review}")
+
+import os, shutil
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+BACKUP_DIR = "SystemBackups"
+
+class BackupRestore(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Backup & Restore - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        backup_menu = menubar.addMenu("Yedekleme")
+
+        clear_action = QAction("Yedekleri Temizle", self)
+        clear_action.triggered.connect(self.clear_backups)
+        backup_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Kontroller
+        btn_backup = QPushButton("📦 Yedek Al")
+        btn_backup.clicked.connect(self.create_backup)
+        layout.addWidget(btn_backup)
+
+        btn_restore = QPushButton("♻️ Yedekten Geri Yükle")
+        btn_restore.clicked.connect(self.restore_backup)
+        layout.addWidget(btn_restore)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        os.makedirs(BACKUP_DIR, exist_ok=True)
+
+    def create_backup(self):
+        fname, _ = QFileDialog.getSaveFileName(self, "Yedek Kaydet", BACKUP_DIR, "Backup Files (*.bak)")
+        if fname:
+            src = "system_config.json"
+            if os.path.exists(src):
+                try:
+                    shutil.copy(src, fname)
+                    QMessageBox.information(self, "Backup", f"Yedek {fname} olarak kaydedildi!")
+                    if self.kernel and hasattr(self.kernel, "audit_manager"):
+                        self.kernel.audit_manager.record("Create Backup", fname)
+                except Exception as e:
+                    QMessageBox.warning(self, "Error", f"Yedekleme hatası: {e}")
+            else:
+                QMessageBox.warning(self, "Error", "Kaynak dosya bulunamadı!")
+
+    def restore_backup(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Yedek Seç", BACKUP_DIR, "Backup Files (*.bak)")
+        if fname:
+            dest = "system_config.json"
+            try:
+                shutil.copy(fname, dest)
+                QMessageBox.information(self, "Restore", f"{fname} geri yüklendi!")
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Restore Backup", fname)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Geri yükleme hatası: {e}")
+
+    def clear_backups(self):
+        try:
+            for f in os.listdir(BACKUP_DIR):
+                path = os.path.join(BACKUP_DIR, f)
+                if os.path.isfile(path):
+                    os.remove(path)
+            QMessageBox.information(self, "Clear", "Tüm yedekler silindi!")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Clear Backups", "All backups removed")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Yedekler silinemedi: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("BackupRestore Action", "User managed backups")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+
+import os, requests
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLabel,
+    QPushButton, QProgressBar, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+UPDATE_URL = "https://api.github.com/repos/aydintepeemlak3867-cloud/FlourescentOS-3-updating-services/contents"
+DOWNLOAD_DIR = "SystemUpdates"
+
+class UpdateManager(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Update Manager - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        update_menu = menubar.addMenu("Güncelleme")
+
+        check_action = QAction("Güncellemeleri Kontrol Et", self)
+        check_action.triggered.connect(self.check_updates)
+        update_menu.addAction(check_action)
+
+        layout.setMenuBar(menubar)
+
+        # Durum etiketi
+        self.status = QLabel("🔄 Henüz kontrol edilmedi")
+        layout.addWidget(self.status)
+
+        # İndirme ilerlemesi
+        self.progress = QProgressBar()
+        layout.addWidget(self.progress)
+
+        # Kontroller
+        btn_check = QPushButton("🔍 Güncellemeleri Kontrol Et")
+        btn_check.clicked.connect(self.check_updates)
+        layout.addWidget(btn_check)
+
+        btn_download = QPushButton("⬇️ Güncellemeyi İndir")
+        btn_download.clicked.connect(self.download_update)
+        layout.addWidget(btn_download)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+        self.latest_update = None
+
+    def check_updates(self):
+        try:
+            response = requests.get(UPDATE_URL, timeout=5)
+            if response.status_code == 200:
+                files = response.json()
+                updates = [f for f in files if f['name'].endswith('.upd')]
+                if updates:
+                    self.latest_update = updates[0]
+                    self.status.setText(f"✅ Güncelleme bulundu: {self.latest_update['name']}")
+                    if self.kernel:
+                        self.kernel.audit_manager.record("Check Updates", self.latest_update['name'])
+                else:
+                    self.status.setText("❌ Güncelleme yok")
+            else:
+                self.status.setText("⚠️ Sunucu hatası")
+        except requests.exceptions.RequestException:
+            self.status.setText("⚠️ Bağlantı yok")
+
+    def download_update(self):
+        if self.latest_update:
+            url = self.latest_update['download_url']
+            path = os.path.join(DOWNLOAD_DIR, self.latest_update['name'])
+            try:
+                response = requests.get(url, timeout=10, stream=True)
+                total = int(response.headers.get('content-length', 0))
+                self.progress.setValue(0)
+                with open(path, 'wb') as f:
+                    downloaded = 0
+                    for chunk in response.iter_content(1024):
+                        if chunk:
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            if total > 0:
+                                self.progress.setValue(int(downloaded * 100 / total))
+                QMessageBox.information(self, "Update", f"{self.latest_update['name']} indirildi!")
+                if self.kernel:
+                    self.kernel.audit_manager.record("Download Update", self.latest_update['name'])
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Güncelleme indirilemedi: {e}")
+
+    def audit_log(self):
+        if self.kernel:
+            self.kernel.audit_manager.record("UpdateManager Action", "User checked/installed updates")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLabel,
+    QListWidget, QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class NotificationCenter(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Notification Center - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        notif_menu = menubar.addMenu("Bildirimler")
+
+        clear_action = QAction("Tümünü Temizle", self)
+        clear_action.triggered.connect(self.clear_notifications)
+        notif_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Bildirim listesi
+        self.notif_list = QListWidget()
+        layout.addWidget(self.notif_list)
+
+        # Kontroller
+        btn_add = QPushButton("➕ Test Bildirim Ekle")
+        btn_add.clicked.connect(self.add_test_notification)
+        layout.addWidget(btn_add)
+
+        btn_clear = QPushButton("🗑️ Bildirimleri Temizle")
+        btn_clear.clicked.connect(self.clear_notifications)
+        layout.addWidget(btn_clear)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.notifications = []
+
+    def add_notification(self, message):
+        self.notifications.append(message)
+        self.notif_list.addItem(message)
+        if self.kernel:
+            self.kernel.audit_manager.record("Add Notification", message)
+
+    def add_test_notification(self):
+        self.add_notification("🔔 Test bildirimi eklendi")
+
+    def clear_notifications(self):
+        self.notifications.clear()
+        self.notif_list.clear()
+        if self.kernel:
+            self.kernel.audit_manager.record("Clear Notifications", "All cleared")
+        QMessageBox.information(self, "Clear", "Tüm bildirimler temizlendi!")
+
+    def audit_log(self):
+        if self.kernel:
+            self.kernel.audit_manager.record("NotificationCenter Action", "User managed notifications")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLabel,
+    QListWidget, QPushButton, QLineEdit, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class UserManager(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("User Manager - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        user_menu = menubar.addMenu("Kullanıcılar")
+
+        clear_action = QAction("Tümünü Temizle", self)
+        clear_action.triggered.connect(self.clear_users)
+        user_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Kullanıcı listesi
+        self.user_list = QListWidget()
+        layout.addWidget(self.user_list)
+
+        # Kullanıcı giriş alanı
+        self.user_input = QLineEdit()
+        self.user_input.setPlaceholderText("Yeni kullanıcı adı gir...")
+        layout.addWidget(self.user_input)
+
+        # Kontroller
+        btn_add = QPushButton("➕ Kullanıcı Ekle")
+        btn_add.clicked.connect(self.add_user)
+        layout.addWidget(btn_add)
+
+        btn_remove = QPushButton("🗑️ Kullanıcı Sil")
+        btn_remove.clicked.connect(self.remove_user)
+        layout.addWidget(btn_remove)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.users = ["admin", "guest"]
+
+        self.refresh_users()
+
+    def refresh_users(self):
+        self.user_list.clear()
+        for u in self.users:
+            self.user_list.addItem(u)
+
+    def add_user(self):
+        uname = self.user_input.text().strip()
+        if uname:
+            self.users.append(uname)
+            self.user_list.addItem(uname)
+            self.user_input.clear()
+            if self.kernel:
+                self.kernel.audit_manager.record("Add User", uname)
+            QMessageBox.information(self, "Add", f"{uname} eklendi!")
+
+    def remove_user(self):
+        current = self.user_list.currentItem()
+        if current:
+            uname = current.text()
+            self.users.remove(uname)
+            self.user_list.takeItem(self.user_list.currentRow())
+            if self.kernel:
+                self.kernel.audit_manager.record("Remove User", uname)
+            QMessageBox.information(self, "Remove", f"{uname} silindi!")
+
+    def clear_users(self):
+        self.users.clear()
+        self.user_list.clear()
+        if self.kernel:
+            self.kernel.audit_manager.record("Clear Users", "All users removed")
+        QMessageBox.information(self, "Clear", "Tüm kullanıcılar silindi!")
+
+    def audit_log(self):
+        if self.kernel:
+            self.kernel.audit_manager.record("UserManager Action", "User managed accounts")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import sys, os, json, datetime, psutil, subprocess
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+    QLabel, QStackedWidget, QMessageBox, QInputDialog, QLineEdit,
+    QProgressBar, QFrame, QMainWindow, QListWidget, QMenu, QFileDialog
+)
+from PyQt6.QtCore import Qt, QTimer, QUrl
+from PyQt6.QtGui import QAction, QDesktopServices
+
+# --- EKSİK UYGULAMALAR İÇİN TASLAK (STUB) SINIFLAR ---
+#yok aq ne bakıyon la 
+
+DOWNLOAD_DIR = "DownloadedAppsStuff"
+
+GLOBAL_STYLESHEET = """
+QMainWindow, QWidget#MainBG {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #0B1320, stop:0.5 #0D1726, stop:1 #080E18);
+    color: #E1E6ED;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+QLabel#BootLogo { color: #00D2FF; font-size: 48px; font-weight: bold; }
+QLabel#BootSubText { color: #8A99AD; font-size: 14px; font-weight: bold; letter-spacing: 2px; }
+QLabel#BootStatus { color: #728197; font-size: 12px; }
+QProgressBar#BootProgress { border: none; background-color: #121B2A; border-radius: 4px; height: 6px; }
+QProgressBar#BootProgress::chunk { background-color: #00D2FF; border-radius: 4px; }
+
+QFrame#LockCard { background-color: rgba(17, 24, 39, 0.85); border: 1px solid #1C273A; border-radius: 16px; }
+QLabel#LockClock { color: #00D2FF; font-size: 36px; font-weight: bold; }
+QFrame#UserBadge { background-color: #1A2436; border-radius: 8px; }
+QLabel#UserName { color: #FFFFFF; font-size: 14px; font-weight: 600; }
+QLineEdit#PassInput { background-color: #0B111D; border: 1px solid #1E2B40; border-radius: 8px; padding: 8px 12px; color: #FFFFFF; }
+QPushButton#LoginBtn { background-color: #0084FF; color: white; border: none; border-radius: 8px; font-weight: bold; padding: 8px; }
+QPushButton#LoginBtn:hover { background-color: #0073E6; }
+QPushButton#SwitchUserBtn { background-color: #1E2A3E; color: #A0AAB8; border: none; border-radius: 8px; font-weight: 600; padding: 8px; }
+
+QFrame#MacMenuBar { background-color: rgba(15, 22, 35, 0.80); border-bottom: 1px solid rgba(255, 255, 255, 0.08); min-height: 26px; max-height: 26px; }
+QPushButton.MacLogoBtn { color: #00D2FF; font-weight: bold; font-size: 14px; background: transparent; border: none; padding: 0 8px; }
+QPushButton.MacLogoBtn:hover { background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+QLabel.MacAppName { color: #FFFFFF; font-weight: bold; font-size: 12px; padding: 0 6px; }
+QPushButton.MacMenuItem { color: #D1D5DB; background: transparent; border: none; font-size: 12px; padding: 2px 6px; }
+QPushButton.MacMenuItem:hover { color: #FFFFFF; background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+QPushButton::menu-indicator { image: none; width: 0px; }
+QLabel.MacStatusText { color: #D1D5DB; font-size: 12px; padding: 0 4px; }
+
+QMenu { background-color: rgba(22, 32, 50, 0.95); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; padding: 4px; color: #E1E6ED; }
+QMenu::item { padding: 5px 24px 5px 12px; border-radius: 4px; font-size: 12px; }
+QMenu::item:selected { background-color: #0084FF; color: #FFFFFF; }
+QMenu::separator { height: 1px; background-color: rgba(255, 255, 255, 0.12); margin: 4px 6px; }
+
+QFrame#BigSurDock { background-color: rgba(15, 22, 35, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 4px 8px; }
+QPushButton.DockBtn { background-color: #182234; border: none; border-radius: 10px; min-width: 32px; max-width: 32px; min-height: 32px; max-height: 32px; font-size: 15px; }
+QPushButton.DockBtn:hover { background-color: #00D2FF; }
+"""
+
+class AppManager:
+    def __init__(self):
+        self.opened_apps = {}
+
+    def open_app(self, name, widget_class, workspace):
+        if name in self.opened_apps:
+            workspace.setCurrentWidget(self.opened_apps[name])
+        else:
+            app_instance = widget_class()
+            workspace.addWidget(app_instance)
+            self.opened_apps[name] = app_instance
+            workspace.setCurrentWidget(app_instance)
+
+    def close_app(self, name, workspace):
+        if name in self.opened_apps:
+            widget = self.opened_apps.pop(name)
+            workspace.removeWidget(widget)
+            widget.deleteLater()
+
+    def switch_app(self, name, workspace):
+        if name in self.opened_apps:
+            workspace.setCurrentWidget(self.opened_apps[name])
+
+    def list_apps(self):
+        return list(self.opened_apps.keys())
+
+
+class AppRunner(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("AppRunner")
+        self.resize(500, 400)
+
+        layout = QVBoxLayout()
+        self.status = QLabel("🔄 Scanning DownloadedAppsStuff...")
+        layout.addWidget(self.status)
+
+        self.app_list = QListWidget()
+        layout.addWidget(self.app_list)
+
+        self.run_btn = QPushButton("▶️ Run Selected App")
+        self.run_btn.clicked.connect(self.run_app)
+        layout.addWidget(self.run_btn)
+
+        self.remove_btn = QPushButton("🗑️ Remove Selected App")
+        self.remove_btn.clicked.connect(self.remove_app)
+        layout.addWidget(self.remove_btn)
+
+        self.refresh_btn = QPushButton("🔄 Refresh List")
+        self.refresh_btn.clicked.connect(self.load_local_apps)
+        layout.addWidget(self.refresh_btn)
+
+        self.setLayout(layout)
+        self.load_local_apps()
+
+    def load_local_apps(self):
+        self.app_list.clear()
+        if os.path.exists(DOWNLOAD_DIR):
+            files = os.listdir(DOWNLOAD_DIR)
+            pyapps = [f for f in files if f.endswith(".PyApp")]
+            if pyapps:
+                self.status.setText("✅ Apps Found")
+                for app in pyapps:
+                    self.app_list.addItem(app)
+            else:
+                self.status.setText("❌ No Apps Found")
+        else:
+            self.status.setText("⚠️ 404 DownloadedAppsStuff Missing")
+
+    def run_app(self):
+        selected = self.app_list.currentItem()
+        if selected:
+            app_name = selected.text()
+            path = os.path.join(DOWNLOAD_DIR, app_name)
+            try:
+                subprocess.Popen(["python", path])
+                QMessageBox.information(self, "Run", f"{app_name} is running!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to run {app_name}: {e}")
+
+    def remove_app(self):
+        selected = self.app_list.currentItem()
+        if selected:
+            app_name = selected.text()
+            path = os.path.join(DOWNLOAD_DIR, app_name)
+            try:
+                os.remove(path)
+                QMessageBox.information(self, "Remove", f"{app_name} removed successfully!")
+                self.load_local_apps()
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to remove {app_name}: {e}")
+
+
+class BootScreen(QWidget):
+    def __init__(self, on_finish):
+        super().__init__()
+        self.on_finish = on_finish
+        self.val = 0
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        logo = QLabel("[/]")
+        logo.setObjectName("BootLogo")
+        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        sub_text = QLabel("SPM")
+        sub_text.setObjectName("BootSubText")
+        sub_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.status_lbl = QLabel("ANOE başlatılıyor...")
+        self.status_lbl.setObjectName("BootStatus")
+        self.status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.progress = QProgressBar()
+        self.progress.setObjectName("BootProgress")
+        self.progress.setFixedWidth(280)
+        self.progress.setTextVisible(False)
+
+        layout.addWidget(logo)
+        layout.addWidget(sub_text)
+        layout.addSpacing(40)
+        layout.addWidget(self.status_lbl)
+        layout.addSpacing(8)
+        layout.addWidget(self.progress, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.setLayout(layout)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.step)
+        self.timer.start(25)
+
+    def step(self):
+        self.val += 1
+        self.progress.setValue(self.val)
+
+        if self.val <= 25:
+            self.status_lbl.setText("ANOE başlatılıyor...")
+        elif 26 <= self.val <= 49:
+            self.status_lbl.setText("Grafik motoru başlatılıyor...")
+        elif 50 <= self.val <= 74:
+            self.status_lbl.setText("Uygulamalar hazırlanıyor...")
+        elif 75 <= self.val <= 99:
+            self.status_lbl.setText("Son rötüşlar yapılıyor...")
+        elif self.val >= 100:
+            self.status_lbl.setText("Hazır")
+            self.timer.stop()
+            QTimer.singleShot(400, self.on_finish)
+
+
+class LockScreen(QWidget):
+    def __init__(self, on_login_success):
+        super().__init__()
+        self.on_login_success = on_login_success
+        self.current_user = "Kuzey (Admin)"
+        self.target_password = " "
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        card = QFrame()
+        card.setObjectName("LockCard")
+        card.setFixedSize(310, 270)
+
+        card_layout = QVBoxLayout()
+        card_layout.setContentsMargins(20, 20, 20, 20)
+        card_layout.setSpacing(12)
+
+        self.clock = QLabel("20:32")
+        self.clock.setObjectName("LockClock")
+        self.clock.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        user_badge = QFrame()
+        user_badge.setObjectName("UserBadge")
+        badge_layout = QHBoxLayout()
+        badge_layout.setContentsMargins(8, 6, 8, 6)
+        
+        self.user_lbl = QLabel(self.current_user)
+        self.user_lbl.setObjectName("UserName")
+        self.user_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        badge_layout.addWidget(self.user_lbl)
+        user_badge.setLayout(badge_layout)
+
+        self.pass_input = QLineEdit()
+        self.pass_input.setObjectName("PassInput")
+        self.pass_input.setPlaceholderText("Şifre (' ')")
+        self.pass_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.pass_input.returnPressed.connect(self.verify_and_login)
+
+        btn_layout = QHBoxLayout()
+        login_btn = QPushButton("Giriş Yap")
+        login_btn.setObjectName("LoginBtn")
+        login_btn.clicked.connect(self.verify_and_login)
+
+        switch_btn = QPushButton("Kullanıcı Değiştir")
+        switch_btn.setObjectName("SwitchUserBtn")
+        switch_btn.clicked.connect(self.toggle_user)
+
+        btn_layout.addWidget(login_btn)
+        btn_layout.addWidget(switch_btn)
+
+        card_layout.addWidget(self.clock)
+        card_layout.addWidget(user_badge)
+        card_layout.addWidget(self.pass_input)
+        card_layout.addLayout(btn_layout)
+        card.setLayout(card_layout)
+
+        layout.addWidget(card, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.setLayout(layout)
+
+        self.clock_timer = QTimer()
+        self.clock_timer.timeout.connect(self.update_time)
+        self.clock_timer.start(1000)
+
+    def update_time(self):
+        self.clock.setText(datetime.datetime.now().strftime("%H:%M"))
+
+    def toggle_user(self):
+        if "Admin" in self.current_user:
+            self.current_user = "Misafir"
+            self.target_password = ""
+        else:
+            self.current_user = "Kuzey (Admin)"
+            self.target_password = " "
+        self.user_lbl.setText(self.current_user)
+
+    def verify_and_login(self):
+        if self.pass_input.text() == self.target_password:
+            self.on_login_success()
+        else:
+            QMessageBox.warning(self, "Hata", "Hatalı Şifre!")
+
+
+class DesktopUI(QWidget):
+    def __init__(self, apps_dict, main_window):
+        super().__init__()
+        self.apps_dict = apps_dict
+        self.main_window = main_window
+        self.state_file = "savestate4.json"
+        self.app_manager = AppManager()
+
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 10)
+        main_layout.setSpacing(0)
+        self.setLayout(main_layout)
+
+        mac_bar = QFrame()
+        mac_bar.setObjectName("MacMenuBar")
+        bar_layout = QHBoxLayout()
+        bar_layout.setContentsMargins(8, 0, 8, 0)
+        bar_layout.setSpacing(2)
+
+        system_logo = QPushButton("[/]")
+        system_logo.setProperty("class", "MacLogoBtn")
+        system_logo.clicked.connect(self.show_system_menu)
+
+        app_title = QLabel("FlourescentOS")
+        app_title.setProperty("class", "MacAppName")
+
+        bar_layout.addWidget(system_logo)
+        bar_layout.addWidget(app_title)
+
+        # Gelişmiş Dinamik Menü Tanımları
+        menu_structure = {
+            "Dosya": ["Yeni Pencere Aç", "Dosya Aç...", "---", "Masaüstünü Kaydet", "---", "Pencereyi Kapat"],
+            "Düzen": ["Kes", "Kopyala", "Yapıştır", "Sil", "---", "Tümünü Seç"],
+            "Görünüm": ["Tam Ekran Yap", "Pencere Moduna Geç", "---", "Sistemi Yenile"],
+            "Git": ["Masaüstü Klasörü", "İndirilenler", "Uygulamalar", "Sistem Kök Klasörü"],
+            "Pencere": ["Simge Durumuna Küçült", "Büyüt", "---", "Tüm Pencereleri Öne Getir"],
+            "Yardım": ["FlourescentOS Yardım", "Kullanım Kılavuzu"]
+        }
+
+        for menu_title, items in menu_structure.items():
+            btn = QPushButton(menu_title)
+            btn.setProperty("class", "MacMenuItem")
+            btn.setMenu(self.create_sub_menu(items))
+            bar_layout.addWidget(btn)
+
+        bar_layout.addStretch()
+
+        self.icon_cam = QPushButton("📹")
+        self.icon_cam.setProperty("class", "MacMenuItem")
+        self.icon_cam.setMenu(self.create_sub_menu(["Kamera Etkin", "Kamera İzinleri"]))
+
+        self.icon_history = QPushButton("🕒")
+        self.icon_history.setProperty("class", "MacMenuItem")
+        self.icon_history.setMenu(self.create_sub_menu(["Son Etkinlikler", "Geçmişi Temizle"]))
+
+        self.icon_sound = QPushButton("🔊")
+        self.icon_sound.setProperty("class", "MacMenuItem")
+        self.icon_sound.setMenu(self.create_sub_menu(["Sesi Sessize Al", "Ses Çıkışı: Dahili Hoparlör"]))
+
+        self.status_time_lbl = QLabel()
+        self.status_time_lbl.setProperty("class", "MacStatusText")
+
+        self.icon_search = QPushButton("🔍")
+        self.icon_search.setProperty("class", "MacMenuItem")
+        self.icon_search.clicked.connect(self.show_spotlight_search)
+
+        self.icon_control = QPushButton("☰")
+        self.icon_control.setProperty("class", "MacMenuItem")
+        self.icon_control.setMenu(self.create_sub_menu(["Wi-Fi: Bağlı", "Bluetooth: Açık", "---", "Ayarlar..."]))
+
+        bar_layout.addWidget(self.icon_cam)
+        bar_layout.addWidget(self.icon_history)
+        bar_layout.addWidget(self.icon_sound)
+        bar_layout.addWidget(self.status_time_lbl)
+        bar_layout.addWidget(self.icon_search)
+        bar_layout.addWidget(self.icon_control)
+
+        mac_bar.setLayout(bar_layout)
+        main_layout.addWidget(mac_bar)
+
+        self.workspace = QStackedWidget()
+        main_layout.addWidget(self.workspace)
+
+        dock_container = QHBoxLayout()
+        dock_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        dock_panel = QFrame()
+        dock_panel.setObjectName("BigSurDock")
+        dock_layout = QHBoxLayout()
+        dock_layout.setContentsMargins(8, 4, 8, 4)
+        dock_layout.setSpacing(6)
+
+        start_btn = QPushButton("☀️")
+        start_btn.setProperty("class", "DockBtn")
+        dock_layout.addWidget(start_btn)
+
+        for name, widget_class in self.apps_dict.items():
+            btn = QPushButton(name)
+            btn.setProperty("class", "DockBtn")
+            btn.clicked.connect(lambda checked, w=widget_class, n=name:
+                                self.app_manager.open_app(n, w, self.workspace))
+            dock_layout.addWidget(btn)
+
+        task_btn = QPushButton("⚙️")
+        task_btn.setProperty("class", "DockBtn")
+        task_btn.clicked.connect(self.show_task_manager)
+        dock_layout.addWidget(task_btn)
+
+        dock_panel.setLayout(dock_layout)
+        dock_container.addWidget(dock_panel)
+        main_layout.addLayout(dock_container)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_status)
+        self.timer.start(1000)
+        self.update_status()
+
+        self.load_state()
+
+    def create_sub_menu(self, items):
+        menu = QMenu(self)
+        for item in items:
+            if item == "---":
+                menu.addSeparator()
+            else:
+                action = QAction(item, self)
+                action.triggered.connect(lambda checked, text=item: self.handle_menu_action(text))
+                menu.addAction(action)
+        return menu
+
+    def handle_menu_action(self, action_text):
+        # 1. DOSYA İŞLEMLERİ
+        if action_text == "Dosya Aç...":
+            file_path, _ = QFileDialog.getOpenFileName(self, "Bilgisayardan Dosya Seç", "", "Tüm Dosyalar (*)")
+            if file_path:
+                QMessageBox.information(self, "Dosya Seçildi", f"Açılan Dosya:\n{file_path}")
+        elif action_text == "Masaüstünü Kaydet":
+            self.save_state()
+            QMessageBox.information(self, "Sistem", "Masaüstü durumu başarıyla kaydedildi!")
+        elif action_text == "Pencereyi Kapat":
+            current_widget = self.workspace.currentWidget()
+            if current_widget:
+                self.workspace.removeWidget(current_widget)
+
+        # 2. DÜZEN İŞLEMLERİ (Metin Alanları ile Etkileşim)
+        elif action_text in ["Kes", "Kopyala", "Yapıştır", "Sil", "Tümünü Seç"]:
+            focused = QApplication.focusWidget()
+            if isinstance(focused, QLineEdit):
+                if action_text == "Kes": focused.cut()
+                elif action_text == "Kopyala": focused.copy()
+                elif action_text == "Yapıştır": focused.paste()
+                elif action_text == "Sil": focused.clear()
+                elif action_text == "Tümünü Seç": focused.selectAll()
+            else:
+                QMessageBox.warning(self, "Düzen", "Lütfen işlem yapmak için bir metin kutusu seçin.")
+
+        # 3. GÖRÜNÜM & PENCERE İŞLEMLERİ
+        elif action_text == "Tam Ekran Yap":
+            self.main_window.showFullScreen()
+        elif action_text in ["Pencere Moduna Geç", "Büyüt"]:
+            self.main_window.showNormal()
+        elif action_text == "Simge Durumuna Küçült":
+            self.main_window.showMinimized()
+        elif action_text == "Sistemi Yenile":
+            self.update_status()
+
+        # 4. GİT İŞLEMLERİ (PC Klasör Açma)
+        elif action_text in ["Masaüstü Klasörü", "İndirilenler", "Uygulamalar", "Sistem Kök Klasörü"]:
+            path = ""
+            if action_text == "Masaüstü Klasörü": path = os.path.expanduser("~/Desktop")
+            elif action_text == "İndirilenler": path = os.path.expanduser("~/Downloads")
+            elif action_text == "Uygulamalar": path = os.path.expanduser("~")
+            elif action_text == "Sistem Kök Klasörü": path = "/" if sys.platform != "win32" else "C:\\"
+            
+            if os.path.exists(path):
+                QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+
+        # 5. YARDIM İŞLEMLERİ
+        elif action_text in ["FlourescentOS Yardım", "Kullanım Kılavuzu"]:
+            help_text = (
+                "<b>FlourescentOS v5.0 Kullanım Kılavuzu</b><br><br>"
+                "• <b>Menü Çubuğu:</b> Gerçek bilgisayar dosyalarını açabilir veya sistem dizinlerine gidebilirsiniz.<br>"
+                "• <b>Kısayollar:</b> Metin kutularında Düzen menüsünden Kopyala/Yapıştır yapabilirsiniz.<br>"
+                "• <b>Dock:</b> Uygulamaları tek tıkla başlatabilirsiniz.<br>"
+                "• <b>Görev Yöneticisi:</b> Açık uygulamaları ⚙️ butonundan yönetebilirsiniz."
+            )
+            QMessageBox.information(self, "Kılavuz", help_text)
+
+    def show_spotlight_search(self):
+        query, ok = QInputDialog.getText(self, "🔍 Spotlight Arama", "Aranacak dosya veya uygulamayı girin:")
+        if ok and query:
+            QMessageBox.information(self, "Arama Sonucu", f"'{query}' için arama yapılıyor...")
+
+    def show_system_menu(self):
+        # Donanım Özelliklerini psutil İle Çekme
+        cpu_usage = psutil.cpu_percent()
+        ram = psutil.virtual_memory()
+        ram_used = round(ram.used / (1024**3), 2)
+        ram_total = round(ram.total / (1024**3), 2)
+
+        info_text = (
+            f"<b>FlourescentOS 5</b><br>"
+            f"Sürüm: 5.0.1 (Build 2026.08)<br>"
+            f"Grafik Motoru: PyQt6<br><br>"
+            f"<b>Sistem Donanım Özellikleri:</b><br>"
+            f"• İşlemci Yükü: %{cpu_usage}<br>"
+            f"• Bellek (RAM): {ram_used} GB / {ram_total} GB (%{ram.percent})<br>"
+            f"• Platform: {sys.platform.upper()}"
+        )
+        
+        menu = QMenu(self)
+        about_act = QAction("Bu Sistem Hakkında", self)
+        about_act.triggered.connect(lambda: QMessageBox.information(self, "Sistem Bilgisi", info_text))
+        
+        lock_act = QAction("Ekranı Kilitle", self)
+        restart_act = QAction("Yeniden Başlat...", self)
+        
+        menu.addAction(about_act)
+        menu.addSeparator()
+        menu.addAction(lock_act)
+        menu.addAction(restart_act)
+        
+        menu.exec(self.cursor().pos())
+
+    def show_task_manager(self):
+        tasks = self.app_manager.list_apps()
+        if not tasks:
+            QMessageBox.information(self, "Görev Yöneticisi", "Hiç uygulama açık değil")
+            return
+        app_name, ok = QInputDialog.getItem(self, "Görev Yöneticisi", "Uygulama seç:", tasks, 0, False)
+        if ok and app_name:
+            action, ok2 = QInputDialog.getItem(self, "İşlem Seç", "Ne yapmak istiyorsun?", ["Geçiş Yap", "Kapat"], 0, False)
+            if ok2:
+                if action == "Geçiş Yap": self.app_manager.switch_app(app_name, self.workspace)
+                elif action == "Kapat": self.app_manager.close_app(app_name, self.workspace)
+
+    def update_status(self):
+        now = datetime.datetime.now()
+        day_str = now.strftime("%a")
+        time_str = now.strftime("%I:%M %p").lower()
+        
+        battery_str = ""
+        try:
+            battery = psutil.sensors_battery()
+            if battery: battery_str = f" ⚡{int(battery.percent)}%"
+        except Exception:
+            pass
+
+        self.status_time_lbl.setText(f"{day_str} {time_str}{battery_str}")
+
+    def save_state(self, app_name=None):
+        state = {"current_app_name": app_name, "apps": {}}
+        for n, w in self.app_manager.opened_apps.items():
+            if hasattr(w, "save_state"):
+                state["apps"][n] = w.save_state()
+        with open(self.state_file, "w") as f:
+            json.dump(state, f)
+
+    def load_state(self):
+        if os.path.exists(self.state_file):
+            try:
+                with open(self.state_file, "r") as f:
+                    state = json.load(f)
+                for app_name, app_data in state.get("apps", {}).items():
+                    if app_name in self.apps_dict:
+                        self.app_manager.open_app(app_name, self.apps_dict[app_name], self.workspace)
+                        widget = self.app_manager.opened_apps[app_name]
+                        if hasattr(widget, "load_state"):
+                            widget.load_state(app_data)
+            except Exception:
+                pass
+
+
+class FlourescentOS5(QMainWindow):
+    def __init__(self, apps_dict):
+        super().__init__()
+        self.setWindowTitle("FlourescentOS 5")
+        self.resize(1280, 720)
+        self.setObjectName("MainBG")
+
+        self.root_stack = QStackedWidget()
+        self.setCentralWidget(self.root_stack)
+
+        self.boot_screen = BootScreen(self.show_lock)
+        self.lock_screen = LockScreen(self.show_desktop)
+        self.desktop_ui = DesktopUI(apps_dict, self)
+
+        self.root_stack.addWidget(self.boot_screen)
+        self.root_stack.addWidget(self.lock_screen)
+        self.root_stack.addWidget(self.desktop_ui)
+
+    def show_lock(self):
+        self.root_stack.setCurrentIndex(1)
+
+    def show_desktop(self):
+        self.root_stack.setCurrentIndex(2)
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    app.setStyleSheet(GLOBAL_STYLESHEET)
+
+    apps_dict = {
+          "📝": Texter,
+        "💳": Biller,
+        "📒": Notes,
+        "📧": EmailClient,
+        "📖": Dictionary,
+        "🌍": Translator,
+        "☁️": Weather,
+        "📰": NewsReader,
+        "🗺": Maps,
+        "🌐": Browser,
+        "🎵": MusicPlayer,
+        "📆": CalendarApp,
+        "📓": Notepad,
+        "🖼️": Gallery,
+        "🎨": PaintApp,
+        "🧮": Calculator,
+        "🎞": VideoPlayer,
+        "💬": ChatClient,
+        "🎮": GameHub,
+        "🎹": MusicStudio,
+        "🖼": PhotoEditor,
+        "RUN": AppRunner,
+
+        # Backbone apps
+        "🗂": FileManager,
+        "💻": TerminalEmulator,
+        "📦": PackageManager,
+        "📜": ScriptRunner,
+        "⚙️": ControlPanel,
+        "📊": SystemMonitor,
+        "🛒": FlourescentMarket,
+        "📦": BackupRestore,
+        "🔄": UpdateManager,
+        "🔔": NotificationCenter,
+        "👤": UserManager, 
+    }
+
+    window = FlourescentOS5(apps_dict)
+    window.show()
+    sys.exit(app.exec())

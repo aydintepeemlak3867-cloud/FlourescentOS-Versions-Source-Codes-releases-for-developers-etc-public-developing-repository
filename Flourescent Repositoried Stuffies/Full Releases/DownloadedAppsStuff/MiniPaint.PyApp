@@ -1,0 +1,30 @@
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QTextEdit
+
+class App(QWidget):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        layout = QVBoxLayout(self)
+
+        title = QLabel("🎨 Mini Paint")
+        title.setStyleSheet(
+            "font-size:24px;font-weight:bold;"
+        )
+
+        layout.addWidget(title)
+
+        label = QLabel(
+            "Şimdilik çizim alanı yerine "
+            "mini canvas kullanılıyor."
+        )
+
+        layout.addWidget(label)
+
+        canvas = QTextEdit()
+
+        canvas.setPlaceholderText(
+            "Buraya bir şeyler karala..."
+        )
+
+        layout.addWidget(canvas)

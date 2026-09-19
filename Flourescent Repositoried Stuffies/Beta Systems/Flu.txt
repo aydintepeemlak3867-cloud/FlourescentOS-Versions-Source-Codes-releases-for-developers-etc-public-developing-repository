@@ -1,0 +1,7807 @@
+import time
+
+class ANOE:
+    def __init__(self):
+        # Kernel açılışında backbone modülleri doğrudan çağırılır
+        self.boot_time = None
+        self.process_manager = ProcessManager()
+        self.resource_monitor = ResourceMonitor()
+        self.event_manager = EventManager()
+        self.job_scheduler = JobScheduler()
+        self.session_manager = SessionManager()
+        self.file_sync_manager = FileSyncManager()
+        self.audit_manager = AuditManager()
+        self.update_monitor = UpdateMonitor()
+        self.package_manager = PackageManager()
+        self.log_manager = LogManager()
+        self.service_monitor = ServiceMonitor()
+        self.task_runner = TaskRunner()
+        self.config_manager = ConfigManager()
+        self.diagnostics_manager = DiagnosticsManager()
+        self.update_scheduler = UpdateScheduler()
+        self.backup_scheduler = BackupScheduler()
+        self.security_manager = SecurityManager()
+        self.network_manager = NetworkManager()
+        print("[ANOE] Kernel initialized with backbone modules")
+
+    def boot(self):
+        self.boot_time = time.ctime()
+        print(f"[ANOE] Kernel booted at {self.boot_time}")
+        # Örnek: boot sırasında log kaydı
+        self.log_manager.write_log("Kernel boot completed")
+
+    def shutdown(self):
+        print("[ANOE] Kernel shutting down...")
+        # Örnek: shutdown sırasında audit kaydı
+        self.audit_manager.record("Shutdown", "system")
+        # Modülleri temizle
+        self.process_manager = None
+        self.resource_monitor = None
+        self.event_manager = None
+        self.job_scheduler = None
+        self.session_manager = None
+        self.file_sync_manager = None
+        self.audit_manager = None
+        self.update_monitor = None
+        self.package_manager = None
+        self.log_manager = None
+        self.service_monitor = None
+        self.task_runner = None
+        self.config_manager = None
+        self.diagnostics_manager = None
+        self.update_scheduler = None
+        self.backup_scheduler = None
+        self.security_manager = None
+        self.network_manager = None
+        print("[ANOE] All modules stopped")
+
+import sqlite3, time, json, os
+
+class ProcessManager:
+    def __init__(self, db_path="processes.db", log_file="process.log"):
+        self.conn = sqlite3.connect(db_path)
+        self.cursor = self.conn.cursor()
+        self.log_file = log_file
+        self._init_table()
+        self.groups = {}   # process grupları
+        self.watchdogs = {} # watchdog mekanizması
+        print("[ProcessManager] Initialized")
+
+    def _init_table(self):
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS processes (
+            id INTEGER PRIMARY KEY,
+            name TEXT UNIQUE,
+            status TEXT,
+            created REAL,
+            last_run REAL,
+            priority INTEGER,
+            group_name TEXT
+        )
+        """)
+        self.conn.commit()
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[ProcessManager LOG]", message)
+
+    # ---------------- REGISTER ----------------
+    def register_process(self, name, priority=5, group=None):
+        try:
+            self.cursor.execute("INSERT INTO processes (name, status, created, last_run, priority, group_name) VALUES (?, ?, ?, ?, ?, ?)",
+                                (name, "STOPPED", time.time(), 0, priority, group))
+            self.conn.commit()
+            self._log(f"Registered process {name} with priority {priority} in group {group}")
+        except sqlite3.IntegrityError:
+            self._log(f"Process {name} already exists")
+
+    # ---------------- START/STOP ----------------
+    def start_process(self, name):
+        self.cursor.execute("UPDATE processes SET status=?, last_run=? WHERE name=?",
+                            ("RUNNING", time.time(), name))
+        self.conn.commit()
+        self._log(f"Started process {name}")
+
+    def stop_process(self, name):
+        self.cursor.execute("UPDATE processes SET status=? WHERE name=?",
+                            ("STOPPED", name))
+        self.conn.commit()
+        self._log(f"Stopped process {name}")
+
+    # ---------------- GROUP MANAGEMENT ----------------
+    def create_group(self, group_name):
+        if group_name not in self.groups:
+            self.groups[group_name] = []
+            self._log(f"Created group {group_name}")
+
+    def add_to_group(self, process_name, group_name):
+        self.cursor.execute("UPDATE processes SET group_name=? WHERE name=?", (group_name, process_name))
+        self.conn.commit()
+        if group_name not in self.groups:
+            self.groups[group_name] = []
+        self.groups[group_name].append(process_name)
+        self._log(f"Added {process_name} to group {group_name}")
+
+    def start_group(self, group_name):
+        if group_name in self.groups:
+            for p in self.groups[group_name]:
+                self.start_process(p)
+            self._log(f"Started group {group_name}")
+
+    def stop_group(self, group_name):
+        if group_name in self.groups:
+            for p in self.groups[group_name]:
+                self.stop_process(p)
+            self._log(f"Stopped group {group_name}")
+
+    # ---------------- PRIORITY ----------------
+    def set_priority(self, name, priority):
+        self.cursor.execute("UPDATE processes SET priority=? WHERE name=?", (priority, name))
+        self.conn.commit()
+        self._log(f"Set priority {priority} for {name}")
+
+    def list_by_priority(self):
+        self.cursor.execute("SELECT name, priority FROM processes ORDER BY priority DESC")
+        rows = self.cursor.fetchall()
+        print("[ProcessManager] Processes by priority:")
+        for name, pr in rows:
+            print(f" - {name}: priority {pr}")
+        return rows
+
+    # ---------------- WATCHDOG ----------------
+    def add_watchdog(self, name, timeout):
+        self.watchdogs[name] = {"timeout": timeout, "last_check": time.time()}
+        self._log(f"Watchdog added for {name} with timeout {timeout}s")
+
+    def check_watchdogs(self):
+        now = time.time()
+        for name, wd in self.watchdogs.items():
+            if now - wd["last_check"] > wd["timeout"]:
+                self._log(f"Watchdog timeout for {name}, restarting...")
+                self.start_process(name)
+                self.watchdogs[name]["last_check"] = now
+
+    # ---------------- SEARCH ----------------
+    def search_process(self, keyword):
+        self.cursor.execute("SELECT name, status FROM processes WHERE name LIKE ?", (f"%{keyword}%",))
+        results = self.cursor.fetchall()
+        print(f"[ProcessManager] Search results for {keyword}:")
+        for name, status in results:
+            print(f" - {name}: {status}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_processes(self, filename="processes.json"):
+        self.cursor.execute("SELECT name, status, created, last_run, priority, group_name FROM processes")
+        rows = self.cursor.fetchall()
+        data = []
+        for r in rows:
+            data.append({
+                "name": r[0],
+                "status": r[1],
+                "created": r[2],
+                "last_run": r[3],
+                "priority": r[4],
+                "group": r[5]
+            })
+        with open(filename, "w") as f:
+            json.dump(data, f, indent=4)
+        self._log(f"Exported processes to {filename}")
+
+    def import_processes(self, filename="processes.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            data = json.load(f)
+        for proc in data:
+            self.register_process(proc["name"], proc["priority"], proc["group"])
+        self._log(f"Imported processes from {filename}")
+
+    # ---------------- LIST/CLEAR ----------------
+    def list_processes(self):
+        self.cursor.execute("SELECT name, status, created, last_run, priority, group_name FROM processes")
+        rows = self.cursor.fetchall()
+        print("[ProcessManager] Current processes:")
+        for name, status, created, last_run, pr, grp in rows:
+            print(f" - {name}: {status} | priority {pr} | group {grp} | created {time.ctime(created)} | last run {time.ctime(last_run)}")
+        return rows
+
+    def clear_processes(self):
+        self.cursor.execute("DELETE FROM processes")
+        self.conn.commit()
+        self._log("All processes cleared")
+
+import psutil, time, json, os
+
+class ResourceMonitor:
+    def __init__(self, log_file="resource.log"):
+        self.resources = {"cpu": 0, "ram": 0, "disk": 0, "net_sent": 0, "net_recv": 0}
+        self.history = []
+        self.log_file = log_file
+        self.thresholds = {"cpu": 90, "ram": 90, "disk": 95, "net_sent": 10**9, "net_recv": 10**9}
+        print("[ResourceMonitor] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[ResourceMonitor LOG]", message)
+
+    # ---------------- UPDATE ----------------
+    def update_resources(self):
+        cpu = psutil.cpu_percent(interval=1)
+        ram = psutil.virtual_memory().percent
+        disk = psutil.disk_usage('/').percent
+        net = psutil.net_io_counters()
+        self.resources.update({
+            "cpu": cpu,
+            "ram": ram,
+            "disk": disk,
+            "net_sent": net.bytes_sent,
+            "net_recv": net.bytes_recv
+        })
+        entry = {"time": time.ctime(), **self.resources}
+        self.history.append(entry)
+        self._log(f"Updated resources: CPU {cpu}% | RAM {ram}% | Disk {disk}% | Net {net.bytes_sent}/{net.bytes_recv}")
+
+    # ---------------- STATUS ----------------
+    def get_status(self):
+        return self.resources
+
+    def list_history(self):
+        print("[ResourceMonitor] History:")
+        for h in self.history:
+            print(f" - {h['time']} | CPU {h['cpu']}% | RAM {h['ram']}% | Disk {h['disk']}% | Net {h['net_sent']}/{h['net_recv']}")
+        return self.history
+
+    # ---------------- THRESHOLD ALERTS ----------------
+    def set_threshold(self, resource, value):
+        self.thresholds[resource] = value
+        self._log(f"Threshold set: {resource} → {value}")
+
+    def check_thresholds(self):
+        alerts = []
+        for res, val in self.resources.items():
+            if res in self.thresholds and val > self.thresholds[res]:
+                alert = f"ALERT: {res} usage {val} exceeded threshold {self.thresholds[res]}"
+                alerts.append(alert)
+                self._log(alert)
+        return alerts
+
+    # ---------------- AVERAGES ----------------
+    def average_usage(self, resource):
+        values = [h[resource] for h in self.history if resource in h]
+        if values:
+            avg = sum(values) / len(values)
+            print(f"[ResourceMonitor] Average {resource}: {avg}")
+            return avg
+        return 0
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_history(self, filename="resource_history.json"):
+        with open(filename, "w") as f:
+            json.dump(self.history, f, indent=4)
+        self._log(f"Exported history to {filename}")
+
+    def import_history(self, filename="resource_history.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.history = json.load(f)
+        self._log(f"Imported history from {filename}")
+
+    # ---------------- CLEAR ----------------
+    def clear_history(self):
+        self.history.clear()
+        self._log("History cleared")
+
+    # ---------------- GRAPH DATA ----------------
+    def prepare_graph_data(self, resource):
+        data = [(h["time"], h[resource]) for h in self.history if resource in h]
+        self._log(f"Prepared graph data for {resource}")
+        return data
+
+import time, json, os
+
+class EventManager:
+    def __init__(self, log_file="events.log"):
+        self.events = []
+        self.log_file = log_file
+        print("[EventManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[EventManager LOG]", message)
+
+    # ---------------- ADD EVENT ----------------
+    def add_event(self, title, description, category="general", severity="info"):
+        event = {
+            "title": title,
+            "description": description,
+            "category": category,
+            "severity": severity,
+            "time": time.ctime()
+        }
+        self.events.append(event)
+        self._log(f"Added event {title} ({category}/{severity})")
+
+    # ---------------- LIST EVENTS ----------------
+    def list_events(self):
+        print("[EventManager] Current events:")
+        for e in self.events:
+            print(f" - {e['time']} | {e['title']} [{e['category']}/{e['severity']}] → {e['description']}")
+        return self.events
+
+    # ---------------- FILTER ----------------
+    def filter_by_category(self, category):
+        results = [e for e in self.events if e["category"] == category]
+        print(f"[EventManager] Events in category {category}:")
+        for e in results:
+            print(f" - {e['time']} | {e['title']} → {e['description']}")
+        return results
+
+    def filter_by_severity(self, severity):
+        results = [e for e in self.events if e["severity"] == severity]
+        print(f"[EventManager] Events with severity {severity}:")
+        for e in results:
+            print(f" - {e['time']} | {e['title']} → {e['description']}")
+        return results
+
+    # ---------------- SEARCH ----------------
+    def search_event(self, keyword):
+        results = [e for e in self.events if keyword.lower() in e["title"].lower() or keyword.lower() in e["description"].lower()]
+        print(f"[EventManager] Search results for '{keyword}':")
+        for e in results:
+            print(f" - {e['time']} | {e['title']} → {e['description']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_events(self, filename="events.json"):
+        with open(filename, "w") as f:
+            json.dump(self.events, f, indent=4)
+        self._log(f"Exported events to {filename}")
+
+    def import_events(self, filename="events.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.events = json.load(f)
+        self._log(f"Imported events from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        categories = {}
+        severities = {}
+        for e in self.events:
+            categories[e["category"]] = categories.get(e["category"], 0) + 1
+            severities[e["severity"]] = severities.get(e["severity"], 0) + 1
+        print("[EventManager] Stats:")
+        print("Categories:", categories)
+        print("Severities:", severities)
+        return {"categories": categories, "severities": severities}
+
+    # ---------------- CLEAR ----------------
+    def clear_events(self):
+        self.events.clear()
+        self._log("All events cleared")
+
+    def auto_clear(self, max_events=100):
+        if len(self.events) > max_events:
+            self.events = self.events[-max_events:]
+            self._log(f"Auto-cleared events, kept last {max_events}")
+
+import threading, time, json, os
+
+class JobScheduler:
+    def __init__(self, log_file="jobs.log"):
+        self.jobs = []
+        self.log_file = log_file
+        print("[JobScheduler] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[JobScheduler LOG]", message)
+
+    # ---------------- ADD JOB ----------------
+    def schedule_job(self, name, delay, func, *args, repeat=False, interval=None, priority=5, **kwargs):
+        job = {
+            "name": name,
+            "delay": delay,
+            "func": func,
+            "args": args,
+            "kwargs": kwargs,
+            "repeat": repeat,
+            "interval": interval,
+            "priority": priority,
+            "status": "SCHEDULED",
+            "time": time.ctime()
+        }
+        self.jobs.append(job)
+        threading.Thread(target=self._run_job, args=(job,)).start()
+        self._log(f"Scheduled job {name} with delay {delay}s, repeat={repeat}, priority={priority}")
+
+    # ---------------- RUN JOB ----------------
+    def _run_job(self, job):
+        try:
+            time.sleep(job["delay"])
+            job["func"](*job["args"], **job["kwargs"])
+            job["status"] = "EXECUTED"
+            self._log(f"Executed job {job['name']}")
+            if job["repeat"] and job["interval"]:
+                while True:
+                    time.sleep(job["interval"])
+                    job["func"](*job["args"], **job["kwargs"])
+                    self._log(f"Repeated job {job['name']}")
+        except Exception as e:
+            job["status"] = "FAILED"
+            self._log(f"Job {job['name']} failed: {e}")
+
+    # ---------------- LIST JOBS ----------------
+    def list_jobs(self):
+        print("[JobScheduler] Active jobs:")
+        for j in self.jobs:
+            print(f" - {j['name']} | status {j['status']} | priority {j['priority']} | scheduled {j['time']}")
+        return self.jobs
+
+    # ---------------- CANCEL JOB ----------------
+    def cancel_job(self, name):
+        for j in self.jobs:
+            if j["name"] == name:
+                j["status"] = "CANCELLED"
+                self._log(f"Cancelled job {name}")
+                return True
+        self._log(f"Job {name} not found")
+        return False
+
+    # ---------------- PRIORITY ----------------
+    def list_by_priority(self):
+        sorted_jobs = sorted(self.jobs, key=lambda j: j["priority"], reverse=True)
+        print("[JobScheduler] Jobs by priority:")
+        for j in sorted_jobs:
+            print(f" - {j['name']}: priority {j['priority']} | status {j['status']}")
+        return sorted_jobs
+
+    def set_priority(self, name, priority):
+        for j in self.jobs:
+            if j["name"] == name:
+                j["priority"] = priority
+                self._log(f"Set priority {priority} for job {name}")
+                return True
+        self._log(f"Job {name} not found")
+        return False
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_jobs(self, filename="jobs.json"):
+        with open(filename, "w") as f:
+            json.dump(self.jobs, f, indent=4)
+        self._log(f"Exported jobs to {filename}")
+
+    def import_jobs(self, filename="jobs.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.jobs = json.load(f)
+        self._log(f"Imported jobs from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        statuses = {}
+        for j in self.jobs:
+            statuses[j["status"]] = statuses.get(j["status"], 0) + 1
+        print("[JobScheduler] Stats:", statuses)
+        return statuses
+
+    # ---------------- CLEAR ----------------
+    def clear_jobs(self):
+        self.jobs.clear()
+        self._log("All jobs cleared")
+
+import sqlite3, hashlib, time, json, os
+
+class SessionManager:
+    def __init__(self, db_path="sessions.db", log_file="sessions.log"):
+        self.conn = sqlite3.connect(db_path)
+        self.cursor = self.conn.cursor()
+        self.log_file = log_file
+        self.active_sessions = {}
+        self._init_table()
+        print("[SessionManager] Initialized")
+
+    # ---------------- TABLE ----------------
+    def _init_table(self):
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sessions (
+            id INTEGER PRIMARY KEY,
+            username TEXT,
+            token TEXT,
+            created REAL,
+            last_active REAL,
+            status TEXT
+        )
+        """)
+        self.conn.commit()
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[SessionManager LOG]", message)
+
+    # ---------------- CREATE ----------------
+    def create_session(self, username):
+        token = hashlib.sha256((username + str(time.time())).encode()).hexdigest()
+        self.cursor.execute("INSERT INTO sessions (username, token, created, last_active, status) VALUES (?, ?, ?, ?, ?)",
+                            (username, token, time.time(), time.time(), "ACTIVE"))
+        self.conn.commit()
+        self.active_sessions[username] = token
+        self._log(f"Created session for {username}")
+        return token
+
+    # ---------------- VALIDATE ----------------
+    def validate_session(self, username, token):
+        self.cursor.execute("SELECT token FROM sessions WHERE username=?", (username,))
+        result = self.cursor.fetchone()
+        if result and result[0] == token:
+            self.cursor.execute("UPDATE sessions SET last_active=? WHERE username=?", (time.time(), username))
+            self.conn.commit()
+            self._log(f"Validated session for {username}")
+            return True
+        self._log(f"Invalid session for {username}")
+        return False
+
+    # ---------------- END ----------------
+    def end_session(self, username):
+        if username in self.active_sessions:
+            del self.active_sessions[username]
+            self.cursor.execute("UPDATE sessions SET status=? WHERE username=?", ("ENDED", username))
+            self.conn.commit()
+            self._log(f"Ended session for {username}")
+
+    # ---------------- TIMEOUT ----------------
+    def timeout_sessions(self, timeout=3600):
+        now = time.time()
+        self.cursor.execute("SELECT username, last_active FROM sessions WHERE status='ACTIVE'")
+        rows = self.cursor.fetchall()
+        for user, last_active in rows:
+            if now - last_active > timeout:
+                self.end_session(user)
+                self._log(f"Session timeout for {user}")
+
+    # ---------------- LIST ----------------
+    def list_sessions(self):
+        self.cursor.execute("SELECT username, token, created, last_active, status FROM sessions")
+        rows = self.cursor.fetchall()
+        print("[SessionManager] Current sessions:")
+        for u, t, c, la, st in rows:
+            print(f" - {u}: {st} | created {time.ctime(c)} | last active {time.ctime(la)}")
+        return rows
+
+    # ---------------- SEARCH ----------------
+    def search_sessions(self, keyword):
+        self.cursor.execute("SELECT username, status FROM sessions WHERE username LIKE ?", (f"%{keyword}%",))
+        results = self.cursor.fetchall()
+        print(f"[SessionManager] Search results for '{keyword}':")
+        for u, st in results:
+            print(f" - {u}: {st}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_sessions(self, filename="sessions.json"):
+        self.cursor.execute("SELECT username, token, created, last_active, status FROM sessions")
+        rows = self.cursor.fetchall()
+        data = []
+        for r in rows:
+            data.append({
+                "username": r[0],
+                "token": r[1],
+                "created": r[2],
+                "last_active": r[3],
+                "status": r[4]
+            })
+        with open(filename, "w") as f:
+            json.dump(data, f, indent=4)
+        self._log(f"Exported sessions to {filename}")
+
+    def import_sessions(self, filename="sessions.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            data = json.load(f)
+        for s in data:
+            self.cursor.execute("INSERT INTO sessions (username, token, created, last_active, status) VALUES (?, ?, ?, ?, ?)",
+                                (s["username"], s["token"], s["created"], s["last_active"], s["status"]))
+        self.conn.commit()
+        self._log(f"Imported sessions from {filename}")
+
+    # ---------------- CLEAR ----------------
+    def clear_sessions(self):
+        self.cursor.execute("DELETE FROM sessions")
+        self.conn.commit()
+        self.active_sessions.clear()
+        self._log("All sessions cleared")
+
+import os, shutil, time, hashlib, json
+
+class FileSyncManager:
+    def __init__(self, sync_dir="synced_files", log_file="filesync.log"):
+        self.sync_dir = sync_dir
+        os.makedirs(self.sync_dir, exist_ok=True)
+        self.log_file = log_file
+        self.synced = {}
+        print("[FileSyncManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[FileSyncManager LOG]", message)
+
+    # ---------------- SYNC ----------------
+    def sync_file(self, src):
+        if not os.path.exists(src):
+            self._log(f"File {src} not found")
+            return None
+        dest = os.path.join(self.sync_dir, os.path.basename(src))
+        shutil.copy(src, dest)
+        checksum = self._checksum(dest)
+        self.synced[os.path.basename(src)] = {"path": dest, "checksum": checksum, "time": time.ctime()}
+        self._log(f"Synced {src} → {dest} | checksum {checksum}")
+        return dest
+
+    def sync_files(self, files):
+        for f in files:
+            self.sync_file(f)
+
+    # ---------------- LIST ----------------
+    def list_synced(self):
+        print("[FileSyncManager] Synced files:")
+        for name, info in self.synced.items():
+            print(f" - {name} | {info['path']} | {info['checksum']} | {info['time']}")
+        return self.synced
+
+    # ---------------- REMOVE ----------------
+    def remove_synced(self, filename):
+        if filename in self.synced:
+            path = self.synced[filename]["path"]
+            if os.path.exists(path):
+                os.remove(path)
+            del self.synced[filename]
+            self._log(f"Removed {filename}")
+        else:
+            self._log(f"{filename} not found in synced list")
+
+    def clear_synced(self):
+        for name, info in list(self.synced.items()):
+            if os.path.exists(info["path"]):
+                os.remove(info["path"])
+            del self.synced[name]
+        self._log("Cleared all synced files")
+
+    # ---------------- CHECKSUM ----------------
+    def _checksum(self, path):
+        h = hashlib.sha256()
+        with open(path, "rb") as f:
+            while chunk := f.read(8192):
+                h.update(chunk)
+        return h.hexdigest()
+
+    def verify_file(self, filename):
+        if filename in self.synced:
+            path = self.synced[filename]["path"]
+            current = self._checksum(path)
+            stored = self.synced[filename]["checksum"]
+            valid = current == stored
+            self._log(f"Verification for {filename}: {valid}")
+            return valid
+        self._log(f"{filename} not found for verification")
+        return False
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_synced(self, filename="synced.json"):
+        with open(filename, "w") as f:
+            json.dump(self.synced, f, indent=4)
+        self._log(f"Exported synced list to {filename}")
+
+    def import_synced(self, filename="synced.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.synced = json.load(f)
+        self._log(f"Imported synced list from {filename}")
+
+    # ---------------- VERSIONING ----------------
+    def sync_versioned(self, src):
+        if not os.path.exists(src):
+            self._log(f"File {src} not found")
+            return None
+        base = os.path.basename(src)
+        version = int(time.time())
+        dest = os.path.join(self.sync_dir, f"{base}_{version}")
+        shutil.copy(src, dest)
+        checksum = self._checksum(dest)
+        self.synced[f"{base}_{version}"] = {"path": dest, "checksum": checksum, "time": time.ctime()}
+        self._log(f"Synced versioned {src} → {dest}")
+        return dest
+
+    def list_versions(self, base_name):
+        versions = [name for name in self.synced if name.startswith(base_name)]
+        print(f"[FileSyncManager] Versions of {base_name}:")
+        for v in versions:
+            print(f" - {v}")
+        return versions
+
+import os, time, json
+
+class AuditManager:
+    def __init__(self, log_file="audit.log"):
+        self.log_file = log_file
+        self.logs = []
+        print("[AuditManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, entry):
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[AuditManager LOG]", entry)
+
+    # ---------------- RECORD ----------------
+    def record(self, action, username, category="system", severity="info"):
+        entry = {
+            "time": time.ctime(),
+            "user": username,
+            "action": action,
+            "category": category,
+            "severity": severity
+        }
+        self.logs.append(entry)
+        self._log(json.dumps(entry))
+
+    # ---------------- READ ----------------
+    def read_logs(self):
+        if not os.path.exists(self.log_file):
+            print("[AuditManager] No logs found")
+            return []
+        with open(self.log_file, "r") as f:
+            lines = f.readlines()
+        print("[AuditManager] Logs:")
+        for line in lines:
+            print(" -", line.strip())
+        return lines
+
+    # ---------------- FILTER ----------------
+    def filter_by_user(self, username):
+        results = [l for l in self.logs if l["user"] == username]
+        print(f"[AuditManager] Logs for user {username}:")
+        for r in results:
+            print(f" - {r['time']} | {r['action']} ({r['category']}/{r['severity']})")
+        return results
+
+    def filter_by_category(self, category):
+        results = [l for l in self.logs if l["category"] == category]
+        print(f"[AuditManager] Logs in category {category}:")
+        for r in results:
+            print(f" - {r['time']} | {r['user']} → {r['action']}")
+        return results
+
+    def filter_by_severity(self, severity):
+        results = [l for l in self.logs if l["severity"] == severity]
+        print(f"[AuditManager] Logs with severity {severity}:")
+        for r in results:
+            print(f" - {r['time']} | {r['user']} → {r['action']}")
+        return results
+
+    # ---------------- SEARCH ----------------
+    def search_logs(self, keyword):
+        results = [l for l in self.logs if keyword.lower() in l["action"].lower()]
+        print(f"[AuditManager] Search results for '{keyword}':")
+        for r in results:
+            print(f" - {r['time']} | {r['user']} → {r['action']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_logs(self, filename="audit.json"):
+        with open(filename, "w") as f:
+            json.dump(self.logs, f, indent=4)
+        print(f"[AuditManager] Exported logs to {filename}")
+
+    def import_logs(self, filename="audit.json"):
+        if not os.path.exists(filename):
+            print("[AuditManager] Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.logs = json.load(f)
+        print(f"[AuditManager] Imported logs from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        users = {}
+        categories = {}
+        severities = {}
+        for l in self.logs:
+            users[l["user"]] = users.get(l["user"], 0) + 1
+            categories[l["category"]] = categories.get(l["category"], 0) + 1
+            severities[l["severity"]] = severities.get(l["severity"], 0) + 1
+        print("[AuditManager] Stats:")
+        print("Users:", users)
+        print("Categories:", categories)
+        print("Severities:", severities)
+        return {"users": users, "categories": categories, "severities": severities}
+
+    # ---------------- CLEAR ----------------
+    def clear_logs(self):
+        open(self.log_file, "w").close()
+        self.logs.clear()
+        print("[AuditManager] Cleared logs")
+
+    def auto_clear(self, max_entries=1000):
+        if len(self.logs) > max_entries:
+            self.logs = self.logs[-max_entries:]
+            print(f"[AuditManager] Auto-cleared logs, kept last {max_entries}")
+
+import time, json, os, requests
+
+class UpdateMonitor:
+    def __init__(self, log_file="updates.log"):
+        self.updates = []
+        self.log_file = log_file
+        self.last_check = None
+        print("[UpdateMonitor] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[UpdateMonitor LOG]", message)
+
+    # ---------------- CHECK ----------------
+    def check_updates(self, source_url=None):
+        self.last_check = time.ctime()
+        if source_url:
+            try:
+                response = requests.get(source_url, timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+                    self.updates = data.get("updates", [])
+                    self._log(f"Checked updates from {source_url}, found {len(self.updates)}")
+                else:
+                    self._log(f"Failed to fetch updates, status {response.status_code}")
+            except Exception as e:
+                self._log(f"Error checking updates: {e}")
+        else:
+            self._log("Checked updates locally (no source URL)")
+
+    # ---------------- LIST ----------------
+    def list_updates(self):
+        print("[UpdateMonitor] Available updates:")
+        for u in self.updates:
+            print(f" - {u.get('name')} v{u.get('version')} | {u.get('description')}")
+        return self.updates
+
+    # ---------------- APPLY ----------------
+    def apply_update(self, name):
+        for u in self.updates:
+            if u.get("name") == name:
+                self._log(f"Applied update {name} v{u.get('version')}")
+                u["status"] = "APPLIED"
+                return True
+        self._log(f"Update {name} not found")
+        return False
+
+    def apply_all(self):
+        for u in self.updates:
+            u["status"] = "APPLIED"
+            self._log(f"Applied update {u.get('name')} v{u.get('version')}")
+        return True
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_updates(self, filename="updates.json"):
+        with open(filename, "w") as f:
+            json.dump(self.updates, f, indent=4)
+        self._log(f"Exported updates to {filename}")
+
+    def import_updates(self, filename="updates.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.updates = json.load(f)
+        self._log(f"Imported updates from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        applied = sum(1 for u in self.updates if u.get("status") == "APPLIED")
+        pending = sum(1 for u in self.updates if u.get("status") != "APPLIED")
+        print("[UpdateMonitor] Stats:")
+        print(f"Applied: {applied}, Pending: {pending}")
+        return {"applied": applied, "pending": pending}
+
+    # ---------------- CLEAR ----------------
+    def clear_updates(self):
+        self.updates.clear()
+        self._log("Cleared all updates")
+
+    # ---------------- AUTO ----------------
+    def auto_update(self, source_url=None):
+        self.check_updates(source_url)
+        self.apply_all()
+        self._log("Auto-update completed")
+
+import os, time, json
+
+class PackageManager:
+    def __init__(self, log_file="packages.log"):
+        self.packages = {}
+        self.log_file = log_file
+        print("[PackageManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[PackageManager LOG]", message)
+
+    # ---------------- INSTALL ----------------
+    def install_package(self, name, version="1.0", dependencies=None, description=""):
+        if name in self.packages:
+            self._log(f"Package {name} already installed")
+            return False
+        self.packages[name] = {
+            "version": version,
+            "dependencies": dependencies or [],
+            "description": description,
+            "status": "INSTALLED",
+            "time": time.ctime()
+        }
+        self._log(f"Installed package {name} v{version}")
+        return True
+
+    # ---------------- REMOVE ----------------
+    def remove_package(self, name):
+        if name in self.packages:
+            del self.packages[name]
+            self._log(f"Removed package {name}")
+            return True
+        self._log(f"Package {name} not found")
+        return False
+
+    # ---------------- UPDATE ----------------
+    def update_package(self, name, new_version):
+        if name in self.packages:
+            old_version = self.packages[name]["version"]
+            self.packages[name]["version"] = new_version
+            self._log(f"Updated package {name} from v{old_version} to v{new_version}")
+            return True
+        self._log(f"Package {name} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_packages(self):
+        print("[PackageManager] Installed packages:")
+        for name, info in self.packages.items():
+            print(f" - {name} v{info['version']} | deps {info['dependencies']} | {info['description']}")
+        return self.packages
+
+    # ---------------- SEARCH ----------------
+    def search_package(self, keyword):
+        results = {n: i for n, i in self.packages.items() if keyword.lower() in n.lower()}
+        print(f"[PackageManager] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name} v{info['version']} | {info['description']}")
+        return results
+
+    # ---------------- DEPENDENCIES ----------------
+    def check_dependencies(self, name):
+        if name not in self.packages:
+            self._log(f"Package {name} not found")
+            return []
+        deps = self.packages[name]["dependencies"]
+        missing = [d for d in deps if d not in self.packages]
+        if missing:
+            self._log(f"Package {name} missing dependencies: {missing}")
+        else:
+            self._log(f"All dependencies satisfied for {name}")
+        return missing
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_packages(self, filename="packages.json"):
+        with open(filename, "w") as f:
+            json.dump(self.packages, f, indent=4)
+        self._log(f"Exported packages to {filename}")
+
+    def import_packages(self, filename="packages.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.packages = json.load(f)
+        self._log(f"Imported packages from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        total = len(self.packages)
+        versions = {}
+        for p in self.packages.values():
+            versions[p["version"]] = versions.get(p["version"], 0) + 1
+        print("[PackageManager] Stats:")
+        print(f"Total packages: {total}")
+        print("Version distribution:", versions)
+        return {"total": total, "versions": versions}
+
+    # ---------------- CLEAR ----------------
+    def clear_packages(self):
+        self.packages.clear()
+        self._log("Cleared all packages")
+
+import os, time, json
+
+class LogManager:
+    def __init__(self, log_file="system.log"):
+        self.log_file = log_file
+        self.logs = []
+        print("[LogManager] Initialized")
+
+    # ---------------- WRITE ----------------
+    def write_log(self, message, level="INFO", source="system"):
+        entry = {
+            "time": time.ctime(),
+            "level": level,
+            "source": source,
+            "message": message
+        }
+        self.logs.append(entry)
+        with open(self.log_file, "a") as f:
+            f.write(json.dumps(entry) + "\n")
+        print(f"[LogManager {level}] {message}")
+
+    # ---------------- READ ----------------
+    def read_logs(self):
+        if not os.path.exists(self.log_file):
+            print("[LogManager] No logs found")
+            return []
+        with open(self.log_file, "r") as f:
+            lines = f.readlines()
+        print("[LogManager] Logs:")
+        for line in lines:
+            print(" -", line.strip())
+        return lines
+
+    # ---------------- FILTER ----------------
+    def filter_by_level(self, level):
+        results = [l for l in self.logs if l["level"] == level]
+        print(f"[LogManager] Logs with level {level}:")
+        for r in results:
+            print(f" - {r['time']} | {r['source']} → {r['message']}")
+        return results
+
+    def filter_by_source(self, source):
+        results = [l for l in self.logs if l["source"] == source]
+        print(f"[LogManager] Logs from source {source}:")
+        for r in results:
+            print(f" - {r['time']} | {r['level']} → {r['message']}")
+        return results
+
+    # ---------------- SEARCH ----------------
+    def search_logs(self, keyword):
+        results = [l for l in self.logs if keyword.lower() in l["message"].lower()]
+        print(f"[LogManager] Search results for '{keyword}':")
+        for r in results:
+            print(f" - {r['time']} | {r['level']} → {r['message']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_logs(self, filename="logs.json"):
+        with open(filename, "w") as f:
+            json.dump(self.logs, f, indent=4)
+        print(f"[LogManager] Exported logs to {filename}")
+
+    def import_logs(self, filename="logs.json"):
+        if not os.path.exists(filename):
+            print("[LogManager] Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.logs = json.load(f)
+        print(f"[LogManager] Imported logs from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        levels = {}
+        sources = {}
+        for l in self.logs:
+            levels[l["level"]] = levels.get(l["level"], 0) + 1
+            sources[l["source"]] = sources.get(l["source"], 0) + 1
+        print("[LogManager] Stats:")
+        print("Levels:", levels)
+        print("Sources:", sources)
+        return {"levels": levels, "sources": sources}
+
+    # ---------------- CLEAR ----------------
+    def clear_logs(self):
+        open(self.log_file, "w").close()
+        self.logs.clear()
+        print("[LogManager] Cleared logs")
+
+    def auto_clear(self, max_entries=1000):
+        if len(self.logs) > max_entries:
+            self.logs = self.logs[-max_entries:]
+            print(f"[LogManager] Auto-cleared logs, kept last {max_entries}")
+
+import time, json, os
+
+class ServiceMonitor:
+    def __init__(self, log_file="services.log"):
+        self.services = {}
+        self.log_file = log_file
+        print("[ServiceMonitor] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[ServiceMonitor LOG]", message)
+
+    # ---------------- REGISTER ----------------
+    def register_service(self, name, description="", dependencies=None):
+        if name in self.services:
+            self._log(f"Service {name} already registered")
+            return False
+        self.services[name] = {
+            "status": "STOPPED",
+            "description": description,
+            "dependencies": dependencies or [],
+            "time": time.ctime()
+        }
+        self._log(f"Registered service {name}")
+        return True
+
+    # ---------------- START/STOP ----------------
+    def start_service(self, name):
+        if name not in self.services:
+            self._log(f"Service {name} not found")
+            return False
+        missing = [d for d in self.services[name]["dependencies"] if d not in self.services or self.services[d]["status"] != "RUNNING"]
+        if missing:
+            self._log(f"Cannot start {name}, missing dependencies: {missing}")
+            return False
+        self.services[name]["status"] = "RUNNING"
+        self._log(f"Started service {name}")
+        return True
+
+    def stop_service(self, name):
+        if name in self.services:
+            self.services[name]["status"] = "STOPPED"
+            self._log(f"Stopped service {name}")
+            return True
+        self._log(f"Service {name} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_services(self):
+        print("[ServiceMonitor] Current services:")
+        for name, info in self.services.items():
+            print(f" - {name}: {info['status']} | deps {info['dependencies']} | {info['description']}")
+        return self.services
+
+    # ---------------- SEARCH ----------------
+    def search_service(self, keyword):
+        results = {n: i for n, i in self.services.items() if keyword.lower() in n.lower()}
+        print(f"[ServiceMonitor] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: {info['status']} | {info['description']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_services(self, filename="services.json"):
+        with open(filename, "w") as f:
+            json.dump(self.services, f, indent=4)
+        self._log(f"Exported services to {filename}")
+
+    def import_services(self, filename="services.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.services = json.load(f)
+        self._log(f"Imported services from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        running = sum(1 for s in self.services.values() if s["status"] == "RUNNING")
+        stopped = sum(1 for s in self.services.values() if s["status"] == "STOPPED")
+        print("[ServiceMonitor] Stats:")
+        print(f"Running: {running}, Stopped: {stopped}")
+        return {"running": running, "stopped": stopped}
+
+    # ---------------- CLEAR ----------------
+    def clear_services(self):
+        self.services.clear()
+        self._log("Cleared all services")
+
+    # ---------------- AUTO ----------------
+    def auto_restart(self):
+        for name, info in self.services.items():
+            if info["status"] == "STOPPED":
+                self.start_service(name)
+                self._log(f"Auto-restarted {name}")
+
+import time, threading, json, os
+
+class TaskRunner:
+    def __init__(self, log_file="tasks.log"):
+        self.tasks = {}
+        self.log_file = log_file
+        print("[TaskRunner] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[TaskRunner LOG]", message)
+
+    # ---------------- REGISTER ----------------
+    def register_task(self, name, func, *args, **kwargs):
+        if name in self.tasks:
+            self._log(f"Task {name} already registered")
+            return False
+        self.tasks[name] = {
+            "func": func,
+            "args": args,
+            "kwargs": kwargs,
+            "status": "REGISTERED",
+            "created": time.ctime(),
+            "last_run": None
+        }
+        self._log(f"Registered task {name}")
+        return True
+
+    # ---------------- RUN ----------------
+    def run_task(self, name):
+        if name not in self.tasks:
+            self._log(f"Task {name} not found")
+            return False
+        try:
+            self.tasks[name]["status"] = "RUNNING"
+            self.tasks[name]["last_run"] = time.ctime()
+            self.tasks[name]["func"](*self.tasks[name]["args"], **self.tasks[name]["kwargs"])
+            self.tasks[name]["status"] = "COMPLETED"
+            self._log(f"Completed task {name}")
+            return True
+        except Exception as e:
+            self.tasks[name]["status"] = "FAILED"
+            self._log(f"Task {name} failed: {e}")
+            return False
+
+    # ---------------- RUN PARALLEL ----------------
+    def run_parallel(self, names):
+        threads = []
+        for n in names:
+            if n in self.tasks:
+                t = threading.Thread(target=self.run_task, args=(n,))
+                threads.append(t)
+                t.start()
+        for t in threads:
+            t.join()
+        self._log(f"Ran tasks in parallel: {names}")
+
+    # ---------------- SCHEDULE ----------------
+    def schedule_task(self, name, delay):
+        if name not in self.tasks:
+            self._log(f"Task {name} not found")
+            return False
+        def delayed():
+            time.sleep(delay)
+            self.run_task(name)
+        threading.Thread(target=delayed).start()
+        self._log(f"Scheduled task {name} with delay {delay}s")
+        return True
+
+    # ---------------- LIST ----------------
+    def list_tasks(self):
+        print("[TaskRunner] Current tasks:")
+        for name, info in self.tasks.items():
+            print(f" - {name}: {info['status']} | created {info['created']} | last run {info['last_run']}")
+        return self.tasks
+
+    # ---------------- SEARCH ----------------
+    def search_tasks(self, keyword):
+        results = {n: i for n, i in self.tasks.items() if keyword.lower() in n.lower()}
+        print(f"[TaskRunner] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: {info['status']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_tasks(self, filename="tasks.json"):
+        with open(filename, "w") as f:
+            json.dump(self.tasks, f, indent=4)
+        self._log(f"Exported tasks to {filename}")
+
+    def import_tasks(self, filename="tasks.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.tasks = json.load(f)
+        self._log(f"Imported tasks from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        statuses = {}
+        for t in self.tasks.values():
+            statuses[t["status"]] = statuses.get(t["status"], 0) + 1
+        print("[TaskRunner] Stats:", statuses)
+        return statuses
+
+    # ---------------- CLEAR ----------------
+    def clear_tasks(self):
+        self.tasks.clear()
+        self._log("Cleared all tasks")
+
+    # ---------------- AUTO ----------------
+    def auto_retry_failed(self):
+        for name, info in self.tasks.items():
+            if info["status"] == "FAILED":
+                self._log(f"Retrying failed task {name}")
+                self.run_task(name)
+
+import os, json, time
+
+class ConfigManager:
+    def __init__(self, config_file="config.json", log_file="config.log"):
+        self.config_file = config_file
+        self.log_file = log_file
+        self.configs = {}
+        self.versions = []
+        self._load()
+        print("[ConfigManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[ConfigManager LOG]", message)
+
+    # ---------------- LOAD/SAVE ----------------
+    def _load(self):
+        if os.path.exists(self.config_file):
+            with open(self.config_file, "r") as f:
+                self.configs = json.load(f)
+            self._log("Loaded configs from file")
+        else:
+            self.configs = {}
+            self._log("No config file found, starting fresh")
+
+    def _save(self):
+        with open(self.config_file, "w") as f:
+            json.dump(self.configs, f, indent=4)
+        self._log("Saved configs to file")
+
+    # ---------------- SET/GET ----------------
+    def set_config(self, key, value):
+        self.configs[key] = value
+        self.versions.append((time.ctime(), dict(self.configs)))
+        self._save()
+        self._log(f"Set config {key} = {value}")
+
+    def get_config(self, key):
+        value = self.configs.get(key)
+        self._log(f"Retrieved config {key} = {value}")
+        return value
+
+    def delete_config(self, key):
+        if key in self.configs:
+            del self.configs[key]
+            self._save()
+            self._log(f"Deleted config {key}")
+        else:
+            self._log(f"Config {key} not found")
+
+    # ---------------- LIST ----------------
+    def list_configs(self):
+        print("[ConfigManager] Current configs:")
+        for k, v in self.configs.items():
+            print(f" - {k}: {v}")
+        return self.configs
+
+    # ---------------- SEARCH ----------------
+    def search_configs(self, keyword):
+        results = {k: v for k, v in self.configs.items() if keyword.lower() in k.lower()}
+        print(f"[ConfigManager] Search results for '{keyword}':")
+        for k, v in results.items():
+            print(f" - {k}: {v}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_configs(self, filename="configs_export.json"):
+        with open(filename, "w") as f:
+            json.dump(self.configs, f, indent=4)
+        self._log(f"Exported configs to {filename}")
+
+    def import_configs(self, filename="configs_export.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.configs = json.load(f)
+        self._save()
+        self._log(f"Imported configs from {filename}")
+
+    # ---------------- VERSIONING ----------------
+    def rollback(self, steps=1):
+        if len(self.versions) < steps:
+            self._log("Not enough versions to rollback")
+            return False
+        self.configs = self.versions[-steps][1]
+        self._save()
+        self._log(f"Rolled back {steps} steps")
+        return True
+
+    def list_versions(self):
+        print("[ConfigManager] Versions:")
+        for t, cfg in self.versions:
+            print(f" - {t}: {cfg}")
+        return self.versions
+
+    # ---------------- CLEAR ----------------
+    def clear_configs(self):
+        self.configs.clear()
+        self._save()
+        self._log("Cleared all configs")
+
+import os, time, json, psutil, platform, traceback
+
+class DiagnosticsManager:
+    def __init__(self, log_file="diagnostics.log"):
+        self.log_file = log_file
+        self.reports = []
+        print("[DiagnosticsManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[DiagnosticsManager LOG]", message)
+
+    # ---------------- SYSTEM INFO ----------------
+    def system_info(self):
+        info = {
+            "platform": platform.system(),
+            "platform_version": platform.version(),
+            "architecture": platform.machine(),
+            "processor": platform.processor(),
+            "python_version": platform.python_version()
+        }
+        self._log(f"System info collected: {info}")
+        return info
+
+    # ---------------- RESOURCE CHECK ----------------
+    def resource_check(self):
+        cpu = psutil.cpu_percent(interval=1)
+        ram = psutil.virtual_memory().percent
+        disk = psutil.disk_usage('/').percent
+        report = {"cpu": cpu, "ram": ram, "disk": disk, "time": time.ctime()}
+        self.reports.append(report)
+        self._log(f"Resource check: CPU {cpu}% | RAM {ram}% | Disk {disk}%")
+        return report
+
+    # ---------------- ERROR TRACE ----------------
+    def capture_error(self, func, *args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            trace = traceback.format_exc()
+            error_report = {"error": str(e), "trace": trace, "time": time.ctime()}
+            self.reports.append(error_report)
+            self._log(f"Error captured: {e}")
+            return error_report
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_reports(self, filename="diagnostics.json"):
+        with open(filename, "w") as f:
+            json.dump(self.reports, f, indent=4)
+        self._log(f"Exported diagnostics to {filename}")
+
+    def import_reports(self, filename="diagnostics.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.reports = json.load(f)
+        self._log(f"Imported diagnostics from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        errors = sum(1 for r in self.reports if "error" in r)
+        checks = sum(1 for r in self.reports if "cpu" in r)
+        print("[DiagnosticsManager] Stats:")
+        print(f"Errors: {errors}, Resource checks: {checks}")
+        return {"errors": errors, "checks": checks}
+
+    # ---------------- CLEAR ----------------
+    def clear_reports(self):
+        self.reports.clear()
+        self._log("Cleared all diagnostic reports")
+
+    # ---------------- AUTO ----------------
+    def auto_check(self, interval=60, duration=300):
+        start = time.time()
+        while time.time() - start < duration:
+            self.resource_check()
+            time.sleep(interval)
+        self._log("Auto-check completed")
+
+import time, json, os, threading
+
+class UpdateScheduler:
+    def __init__(self, log_file="update_scheduler.log"):
+        self.scheduled_updates = []
+        self.log_file = log_file
+        print("[UpdateScheduler] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[UpdateScheduler LOG]", message)
+
+    # ---------------- SCHEDULE ----------------
+    def schedule_update(self, name, func, delay, repeat=False, interval=None):
+        update = {
+            "name": name,
+            "func": func,
+            "delay": delay,
+            "repeat": repeat,
+            "interval": interval,
+            "status": "SCHEDULED",
+            "created": time.ctime(),
+            "last_run": None
+        }
+        self.scheduled_updates.append(update)
+        threading.Thread(target=self._run_update, args=(update,)).start()
+        self._log(f"Scheduled update {name} with delay {delay}s, repeat={repeat}")
+        return True
+
+    # ---------------- RUN ----------------
+    def _run_update(self, update):
+        try:
+            time.sleep(update["delay"])
+            update["func"]()
+            update["status"] = "EXECUTED"
+            update["last_run"] = time.ctime()
+            self._log(f"Executed update {update['name']}")
+            if update["repeat"] and update["interval"]:
+                while True:
+                    time.sleep(update["interval"])
+                    update["func"]()
+                    update["last_run"] = time.ctime()
+                    self._log(f"Repeated update {update['name']}")
+        except Exception as e:
+            update["status"] = "FAILED"
+            self._log(f"Update {update['name']} failed: {e}")
+
+    # ---------------- LIST ----------------
+    def list_updates(self):
+        print("[UpdateScheduler] Current scheduled updates:")
+        for u in self.scheduled_updates:
+            print(f" - {u['name']}: {u['status']} | created {u['created']} | last run {u['last_run']}")
+        return self.scheduled_updates
+
+    # ---------------- CANCEL ----------------
+    def cancel_update(self, name):
+        for u in self.scheduled_updates:
+            if u["name"] == name:
+                u["status"] = "CANCELLED"
+                self._log(f"Cancelled update {name}")
+                return True
+        self._log(f"Update {name} not found")
+        return False
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_updates(self, filename="scheduled_updates.json"):
+        with open(filename, "w") as f:
+            json.dump(self.scheduled_updates, f, indent=4)
+        self._log(f"Exported scheduled updates to {filename}")
+
+    def import_updates(self, filename="scheduled_updates.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.scheduled_updates = json.load(f)
+        self._log(f"Imported scheduled updates from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        executed = sum(1 for u in self.scheduled_updates if u["status"] == "EXECUTED")
+        failed = sum(1 for u in self.scheduled_updates if u["status"] == "FAILED")
+        cancelled = sum(1 for u in self.scheduled_updates if u["status"] == "CANCELLED")
+        pending = sum(1 for u in self.scheduled_updates if u["status"] == "SCHEDULED")
+        print("[UpdateScheduler] Stats:")
+        print(f"Executed: {executed}, Failed: {failed}, Cancelled: {cancelled}, Pending: {pending}")
+        return {"executed": executed, "failed": failed, "cancelled": cancelled, "pending": pending}
+
+    # ---------------- CLEAR ----------------
+    def clear_updates(self):
+        self.scheduled_updates.clear()
+        self._log("Cleared all scheduled updates")
+
+    # ---------------- AUTO ----------------
+    def auto_schedule(self, func, interval=3600):
+        self.schedule_update("auto_update", func, delay=0, repeat=True, interval=interval)
+        self._log(f"Auto-scheduled update every {interval}s")
+
+import os, time, json, hashlib
+
+class SecurityManager:
+    def __init__(self, log_file="security.log"):
+        self.log_file = log_file
+        self.users = {}
+        self.policies = {}
+        self.audit = []
+        print("[SecurityManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[SecurityManager LOG]", message)
+
+    # ---------------- USER MANAGEMENT ----------------
+    def add_user(self, username, password, role="user"):
+        if username in self.users:
+            self._log(f"User {username} already exists")
+            return False
+        hashed = hashlib.sha256(password.encode()).hexdigest()
+        self.users[username] = {"password": hashed, "role": role, "status": "ACTIVE"}
+        self._log(f"Added user {username} with role {role}")
+        return True
+
+    def authenticate(self, username, password):
+        if username not in self.users:
+            self._log(f"Authentication failed for {username}")
+            return False
+        hashed = hashlib.sha256(password.encode()).hexdigest()
+        if self.users[username]["password"] == hashed and self.users[username]["status"] == "ACTIVE":
+            self._log(f"User {username} authenticated successfully")
+            return True
+        self._log(f"Authentication failed for {username}")
+        return False
+
+    def disable_user(self, username):
+        if username in self.users:
+            self.users[username]["status"] = "DISABLED"
+            self._log(f"Disabled user {username}")
+            return True
+        self._log(f"User {username} not found")
+        return False
+
+    # ---------------- POLICY MANAGEMENT ----------------
+    def add_policy(self, name, description, severity="medium"):
+        self.policies[name] = {"description": description, "severity": severity, "time": time.ctime()}
+        self._log(f"Added policy {name} ({severity})")
+
+    def list_policies(self):
+        print("[SecurityManager] Policies:")
+        for name, info in self.policies.items():
+            print(f" - {name}: {info['description']} | severity {info['severity']}")
+        return self.policies
+
+    def enforce_policy(self, name, username):
+        if name not in self.policies or username not in self.users:
+            self._log(f"Policy enforcement failed for {name} on {username}")
+            return False
+        entry = {"policy": name, "user": username, "time": time.ctime()}
+        self.audit.append(entry)
+        self._log(f"Enforced policy {name} on {username}")
+        return True
+
+    # ---------------- AUDIT ----------------
+    def list_audit(self):
+        print("[SecurityManager] Audit log:")
+        for a in self.audit:
+            print(f" - {a['time']} | {a['user']} → {a['policy']}")
+        return self.audit
+
+    def export_audit(self, filename="security_audit.json"):
+        with open(filename, "w") as f:
+            json.dump(self.audit, f, indent=4)
+        self._log(f"Exported audit to {filename}")
+
+    def import_audit(self, filename="security_audit.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.audit = json.load(f)
+        self._log(f"Imported audit from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        active_users = sum(1 for u in self.users.values() if u["status"] == "ACTIVE")
+        disabled_users = sum(1 for u in self.users.values() if u["status"] == "DISABLED")
+        policies_count = len(self.policies)
+        print("[SecurityManager] Stats:")
+        print(f"Active users: {active_users}, Disabled users: {disabled_users}, Policies: {policies_count}")
+        return {"active_users": active_users, "disabled_users": disabled_users, "policies": policies_count}
+
+    # ---------------- CLEAR ----------------
+    def clear_users(self):
+        self.users.clear()
+        self._log("Cleared all users")
+
+    def clear_policies(self):
+        self.policies.clear()
+        self._log("Cleared all policies")
+
+    def clear_audit(self):
+        self.audit.clear()
+        self._log("Cleared audit log")
+
+import os, time, json, shutil
+
+class BackupManager:
+    def __init__(self, backup_dir="backups", log_file="backup.log"):
+        self.backup_dir = backup_dir
+        os.makedirs(self.backup_dir, exist_ok=True)
+        self.log_file = log_file
+        self.backups = {}
+        print("[BackupManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[BackupManager LOG]", message)
+
+    # ---------------- CREATE ----------------
+    def create_backup(self, name, src_path):
+        if not os.path.exists(src_path):
+            self._log(f"Source path {src_path} not found")
+            return False
+        timestamp = int(time.time())
+        dest = os.path.join(self.backup_dir, f"{name}_{timestamp}")
+        if os.path.isdir(src_path):
+            shutil.copytree(src_path, dest)
+        else:
+            shutil.copy(src_path, dest)
+        self.backups[name] = {"path": dest, "time": time.ctime(), "status": "CREATED"}
+        self._log(f"Created backup {name} → {dest}")
+        return True
+
+    # ---------------- RESTORE ----------------
+    def restore_backup(self, name, dest_path):
+        if name not in self.backups:
+            self._log(f"Backup {name} not found")
+            return False
+        src = self.backups[name]["path"]
+        if os.path.isdir(src):
+            shutil.copytree(src, dest_path, dirs_exist_ok=True)
+        else:
+            shutil.copy(src, dest_path)
+        self.backups[name]["status"] = "RESTORED"
+        self._log(f"Restored backup {name} → {dest_path}")
+        return True
+
+    # ---------------- LIST ----------------
+    def list_backups(self):
+        print("[BackupManager] Current backups:")
+        for name, info in self.backups.items():
+            print(f" - {name}: {info['status']} | {info['path']} | {info['time']}")
+        return self.backups
+
+    # ---------------- DELETE ----------------
+    def delete_backup(self, name):
+        if name in self.backups:
+            path = self.backups[name]["path"]
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            elif os.path.exists(path):
+                os.remove(path)
+            del self.backups[name]
+            self._log(f"Deleted backup {name}")
+            return True
+        self._log(f"Backup {name} not found")
+        return False
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_backups(self, filename="backups.json"):
+        with open(filename, "w") as f:
+            json.dump(self.backups, f, indent=4)
+        self._log(f"Exported backups to {filename}")
+
+    def import_backups(self, filename="backups.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.backups = json.load(f)
+        self._log(f"Imported backups from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        created = sum(1 for b in self.backups.values() if b["status"] == "CREATED")
+        restored = sum(1 for b in self.backups.values() if b["status"] == "RESTORED")
+        print("[BackupManager] Stats:")
+        print(f"Created: {created}, Restored: {restored}")
+        return {"created": created, "restored": restored}
+
+    # ---------------- CLEAR ----------------
+    def clear_backups(self):
+        for name, info in list(self.backups.items()):
+            path = info["path"]
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            elif os.path.exists(path):
+                os.remove(path)
+            del self.backups[name]
+        self._log("Cleared all backups")
+
+    # ---------------- AUTO ----------------
+    def auto_backup(self, name, src_path, interval=3600, duration=10800):
+        start = time.time()
+        while time.time() - start < duration:
+            self.create_backup(name, src_path)
+            time.sleep(interval)
+        self._log(f"Auto-backup completed for {name}")
+
+import os, time, json
+
+class NotificationManager:
+    def __init__(self, log_file="notifications.log"):
+        self.log_file = log_file
+        self.notifications = []
+        print("[NotificationManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[NotificationManager LOG]", message)
+
+    # ---------------- CREATE ----------------
+    def create_notification(self, title, message, category="general", priority="normal"):
+        notif = {
+            "title": title,
+            "message": message,
+            "category": category,
+            "priority": priority,
+            "time": time.ctime(),
+            "status": "NEW"
+        }
+        self.notifications.append(notif)
+        self._log(f"Created notification {title} ({category}/{priority})")
+        return notif
+
+    # ---------------- LIST ----------------
+    def list_notifications(self):
+        print("[NotificationManager] Current notifications:")
+        for n in self.notifications:
+            print(f" - {n['time']} | {n['title']} [{n['category']}/{n['priority']}] → {n['message']} | {n['status']}")
+        return self.notifications
+
+    # ---------------- MARK ----------------
+    def mark_as_read(self, title):
+        for n in self.notifications:
+            if n["title"] == title:
+                n["status"] = "READ"
+                self._log(f"Marked notification {title} as READ")
+                return True
+        self._log(f"Notification {title} not found")
+        return False
+
+    def mark_all_read(self):
+        for n in self.notifications:
+            n["status"] = "READ"
+        self._log("Marked all notifications as READ")
+
+    # ---------------- FILTER ----------------
+    def filter_by_category(self, category):
+        results = [n for n in self.notifications if n["category"] == category]
+        print(f"[NotificationManager] Notifications in category {category}:")
+        for r in results:
+            print(f" - {r['time']} | {r['title']} → {r['message']}")
+        return results
+
+    def filter_by_priority(self, priority):
+        results = [n for n in self.notifications if n["priority"] == priority]
+        print(f"[NotificationManager] Notifications with priority {priority}:")
+        for r in results:
+            print(f" - {r['time']} | {r['title']} → {r['message']}")
+        return results
+
+    # ---------------- SEARCH ----------------
+    def search_notifications(self, keyword):
+        results = [n for n in self.notifications if keyword.lower() in n["title"].lower() or keyword.lower() in n["message"].lower()]
+        print(f"[NotificationManager] Search results for '{keyword}':")
+        for r in results:
+            print(f" - {r['time']} | {r['title']} → {r['message']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_notifications(self, filename="notifications.json"):
+        with open(filename, "w") as f:
+            json.dump(self.notifications, f, indent=4)
+        self._log(f"Exported notifications to {filename}")
+
+    def import_notifications(self, filename="notifications.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.notifications = json.load(f)
+        self._log(f"Imported notifications from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        new_count = sum(1 for n in self.notifications if n["status"] == "NEW")
+        read_count = sum(1 for n in self.notifications if n["status"] == "READ")
+        print("[NotificationManager] Stats:")
+        print(f"New: {new_count}, Read: {read_count}")
+        return {"new": new_count, "read": read_count}
+
+    # ---------------- CLEAR ----------------
+    def clear_notifications(self):
+        self.notifications.clear()
+        self._log("Cleared all notifications")
+
+    # ---------------- AUTO ----------------
+    def auto_notify(self, title, message, interval=60, duration=300):
+        start = time.time()
+        while time.time() - start < duration:
+            self.create_notification(title, message, category="auto", priority="normal")
+            time.sleep(interval)
+        self._log("Auto-notify completed")
+
+import os, time, json, psutil
+
+class ResourceManager:
+    def __init__(self, log_file="resources.log"):
+        self.log_file = log_file
+        self.resources = {}
+        print("[ResourceManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[ResourceManager LOG]", message)
+
+    # ---------------- TRACK ----------------
+    def track_resource(self, name, limit):
+        self.resources[name] = {"limit": limit, "usage": 0, "status": "TRACKING"}
+        self._log(f"Tracking resource {name} with limit {limit}")
+
+    def update_usage(self, name, usage):
+        if name not in self.resources:
+            self._log(f"Resource {name} not found")
+            return False
+        self.resources[name]["usage"] = usage
+        status = "OK" if usage <= self.resources[name]["limit"] else "EXCEEDED"
+        self.resources[name]["status"] = status
+        self._log(f"Updated {name} usage {usage} (status {status})")
+        return True
+
+    # ---------------- SYSTEM RESOURCES ----------------
+    def system_resources(self):
+        cpu = psutil.cpu_percent(interval=1)
+        ram = psutil.virtual_memory().percent
+        disk = psutil.disk_usage('/').percent
+        report = {"cpu": cpu, "ram": ram, "disk": disk, "time": time.ctime()}
+        self._log(f"System resources: CPU {cpu}% | RAM {ram}% | Disk {disk}%")
+        return report
+
+    # ---------------- LIST ----------------
+    def list_resources(self):
+        print("[ResourceManager] Current resources:")
+        for name, info in self.resources.items():
+            print(f" - {name}: usage {info['usage']} / {info['limit']} | status {info['status']}")
+        return self.resources
+
+    # ---------------- SEARCH ----------------
+    def search_resources(self, keyword):
+        results = {n: i for n, i in self.resources.items() if keyword.lower() in n.lower()}
+        print(f"[ResourceManager] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: usage {info['usage']} / {info['limit']} | status {info['status']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_resources(self, filename="resources.json"):
+        with open(filename, "w") as f:
+            json.dump(self.resources, f, indent=4)
+        self._log(f"Exported resources to {filename}")
+
+    def import_resources(self, filename="resources.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.resources = json.load(f)
+        self._log(f"Imported resources from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        exceeded = sum(1 for r in self.resources.values() if r["status"] == "EXCEEDED")
+        ok = sum(1 for r in self.resources.values() if r["status"] == "OK")
+        tracking = sum(1 for r in self.resources.values() if r["status"] == "TRACKING")
+        print("[ResourceManager] Stats:")
+        print(f"OK: {ok}, Exceeded: {exceeded}, Tracking: {tracking}")
+        return {"ok": ok, "exceeded": exceeded, "tracking": tracking}
+
+    # ---------------- CLEAR ----------------
+    def clear_resources(self):
+        self.resources.clear()
+        self._log("Cleared all resources")
+
+    # ---------------- AUTO ----------------
+    def auto_monitor(self, interval=60, duration=300):
+        start = time.time()
+        while time.time() - start < duration:
+            self.system_resources()
+            time.sleep(interval)
+        self._log("Auto-monitor completed")
+
+import os, time, json
+
+class EventManager:
+    def __init__(self, log_file="events.log"):
+        self.log_file = log_file
+        self.events = []
+        print("[EventManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[EventManager LOG]", message)
+
+    # ---------------- CREATE ----------------
+    def create_event(self, name, description="", category="general", priority="normal"):
+        event = {
+            "name": name,
+            "description": description,
+            "category": category,
+            "priority": priority,
+            "time": time.ctime(),
+            "status": "NEW"
+        }
+        self.events.append(event)
+        self._log(f"Created event {name} ({category}/{priority})")
+        return event
+
+    # ---------------- LIST ----------------
+    def list_events(self):
+        print("[EventManager] Current events:")
+        for e in self.events:
+            print(f" - {e['time']} | {e['name']} [{e['category']}/{e['priority']}] → {e['description']} | {e['status']}")
+        return self.events
+
+    # ---------------- UPDATE ----------------
+    def update_event(self, name, description=None, category=None, priority=None, status=None):
+        for e in self.events:
+            if e["name"] == name:
+                if description: e["description"] = description
+                if category: e["category"] = category
+                if priority: e["priority"] = priority
+                if status: e["status"] = status
+                self._log(f"Updated event {name}")
+                return True
+        self._log(f"Event {name} not found")
+        return False
+
+    # ---------------- DELETE ----------------
+    def delete_event(self, name):
+        for e in self.events:
+            if e["name"] == name:
+                self.events.remove(e)
+                self._log(f"Deleted event {name}")
+                return True
+        self._log(f"Event {name} not found")
+        return False
+
+    # ---------------- FILTER ----------------
+    def filter_by_category(self, category):
+        results = [e for e in self.events if e["category"] == category]
+        print(f"[EventManager] Events in category {category}:")
+        for r in results:
+            print(f" - {r['time']} | {r['name']} → {r['description']}")
+        return results
+
+    def filter_by_priority(self, priority):
+        results = [e for e in self.events if e["priority"] == priority]
+        print(f"[EventManager] Events with priority {priority}:")
+        for r in results:
+            print(f" - {r['time']} | {r['name']} → {r['description']}")
+        return results
+
+    # ---------------- SEARCH ----------------
+    def search_events(self, keyword):
+        results = [e for e in self.events if keyword.lower() in e["name"].lower() or keyword.lower() in e["description"].lower()]
+        print(f"[EventManager] Search results for '{keyword}':")
+        for r in results:
+            print(f" - {r['time']} | {r['name']} → {r['description']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_events(self, filename="events.json"):
+        with open(filename, "w") as f:
+            json.dump(self.events, f, indent=4)
+        self._log(f"Exported events to {filename}")
+
+    def import_events(self, filename="events.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.events = json.load(f)
+        self._log(f"Imported events from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        new_count = sum(1 for e in self.events if e["status"] == "NEW")
+        updated_count = sum(1 for e in self.events if e["status"] != "NEW")
+        print("[EventManager] Stats:")
+        print(f"New: {new_count}, Updated: {updated_count}")
+        return {"new": new_count, "updated": updated_count}
+
+    # ---------------- CLEAR ----------------
+    def clear_events(self):
+        self.events.clear()
+        self._log("Cleared all events")
+
+    # ---------------- AUTO ----------------
+    def auto_event(self, name, description, interval=60, duration=300):
+        start = time.time()
+        while time.time() - start < duration:
+            self.create_event(name, description, category="auto", priority="normal")
+            time.sleep(interval)
+        self._log("Auto-event generation completed")
+
+import os, time, json, psutil, subprocess
+
+class ProcessManager:
+    def __init__(self, log_file="processes.log"):
+        self.log_file = log_file
+        self.processes = {}
+        print("[ProcessManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[ProcessManager LOG]", message)
+
+    # ---------------- LIST ----------------
+    def list_processes(self):
+        procs = []
+        for p in psutil.process_iter(['pid', 'name', 'status']):
+            procs.append(p.info)
+        print("[ProcessManager] Current processes:")
+        for p in procs:
+            print(f" - PID {p['pid']} | {p['name']} | {p['status']}")
+        return procs
+
+    # ---------------- START ----------------
+    def start_process(self, command, name=None):
+        try:
+            proc = subprocess.Popen(command, shell=True)
+            pname = name or f"proc_{proc.pid}"
+            self.processes[pname] = {"pid": proc.pid, "command": command, "status": "RUNNING", "time": time.ctime()}
+            self._log(f"Started process {pname} (PID {proc.pid})")
+            return proc.pid
+        except Exception as e:
+            self._log(f"Failed to start process: {e}")
+            return None
+
+    # ---------------- STOP ----------------
+    def stop_process(self, pid):
+        try:
+            p = psutil.Process(pid)
+            p.terminate()
+            self._log(f"Stopped process PID {pid}")
+            return True
+        except Exception as e:
+            self._log(f"Failed to stop process PID {pid}: {e}")
+            return False
+
+    # ---------------- INFO ----------------
+    def process_info(self, pid):
+        try:
+            p = psutil.Process(pid)
+            info = {
+                "pid": p.pid,
+                "name": p.name(),
+                "status": p.status(),
+                "cpu": p.cpu_percent(interval=0.1),
+                "memory": p.memory_percent(),
+                "threads": p.num_threads()
+            }
+            self._log(f"Retrieved info for PID {pid}: {info}")
+            return info
+        except Exception as e:
+            self._log(f"Failed to get info for PID {pid}: {e}")
+            return None
+
+    # ---------------- SEARCH ----------------
+    def search_process(self, keyword):
+        results = []
+        for p in psutil.process_iter(['pid', 'name']):
+            if keyword.lower() in p.info['name'].lower():
+                results.append(p.info)
+        print(f"[ProcessManager] Search results for '{keyword}':")
+        for r in results:
+            print(f" - PID {r['pid']} | {r['name']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_processes(self, filename="processes.json"):
+        with open(filename, "w") as f:
+            json.dump(self.processes, f, indent=4)
+        self._log(f"Exported tracked processes to {filename}")
+
+    def import_processes(self, filename="processes.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.processes = json.load(f)
+        self._log(f"Imported tracked processes from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        running = sum(1 for p in self.processes.values() if p["status"] == "RUNNING")
+        stopped = sum(1 for p in self.processes.values() if p["status"] != "RUNNING")
+        print("[ProcessManager] Stats:")
+        print(f"Running: {running}, Stopped: {stopped}")
+        return {"running": running, "stopped": stopped}
+
+    # ---------------- CLEAR ----------------
+    def clear_processes(self):
+        self.processes.clear()
+        self._log("Cleared tracked processes")
+
+    # ---------------- AUTO ----------------
+    def auto_kill_high_cpu(self, threshold=80):
+        for p in psutil.process_iter(['pid', 'name', 'cpu_percent']):
+            try:
+                cpu = p.cpu_percent(interval=0.1)
+                if cpu > threshold:
+                    psutil.Process(p.pid).terminate()
+                    self._log(f"Auto-killed process {p.info['name']} (PID {p.pid}) using {cpu}% CPU")
+            except Exception as e:
+                self._log(f"Failed auto-kill check for PID {p.pid}: {e}")
+
+import os, time, json, threading
+
+class ThreadManager:
+    def __init__(self, log_file="threads.log"):
+        self.log_file = log_file
+        self.threads = {}
+        print("[ThreadManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[ThreadManager LOG]", message)
+
+    # ---------------- CREATE ----------------
+    def create_thread(self, name, target, *args, **kwargs):
+        if name in self.threads:
+            self._log(f"Thread {name} already exists")
+            return False
+        t = threading.Thread(target=target, args=args, kwargs=kwargs, daemon=True)
+        self.threads[name] = {"thread": t, "status": "CREATED", "time": time.ctime()}
+        self._log(f"Created thread {name}")
+        return True
+
+    # ---------------- START ----------------
+    def start_thread(self, name):
+        if name not in self.threads:
+            self._log(f"Thread {name} not found")
+            return False
+        t = self.threads[name]["thread"]
+        if not t.is_alive():
+            t.start()
+            self.threads[name]["status"] = "RUNNING"
+            self._log(f"Started thread {name}")
+            return True
+        self._log(f"Thread {name} already running")
+        return False
+
+    # ---------------- STATUS ----------------
+    def thread_status(self, name):
+        if name in self.threads:
+            t = self.threads[name]["thread"]
+            status = "RUNNING" if t.is_alive() else self.threads[name]["status"]
+            self._log(f"Status of thread {name}: {status}")
+            return status
+        self._log(f"Thread {name} not found")
+        return None
+
+    # ---------------- LIST ----------------
+    def list_threads(self):
+        print("[ThreadManager] Current threads:")
+        for name, info in self.threads.items():
+            t = info["thread"]
+            status = "RUNNING" if t.is_alive() else info["status"]
+            print(f" - {name}: {status} | created {info['time']}")
+        return self.threads
+
+    # ---------------- SEARCH ----------------
+    def search_threads(self, keyword):
+        results = {n: i for n, i in self.threads.items() if keyword.lower() in n.lower()}
+        print(f"[ThreadManager] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: {info['status']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_threads(self, filename="threads.json"):
+        export_data = {n: {"status": i["status"], "time": i["time"]} for n, i in self.threads.items()}
+        with open(filename, "w") as f:
+            json.dump(export_data, f, indent=4)
+        self._log(f"Exported threads to {filename}")
+
+    def import_threads(self, filename="threads.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            imported = json.load(f)
+        for n, i in imported.items():
+            self.threads[n] = {"thread": None, "status": i["status"], "time": i["time"]}
+        self._log(f"Imported threads from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        running = sum(1 for i in self.threads.values() if i["thread"] and i["thread"].is_alive())
+        created = sum(1 for i in self.threads.values() if i["status"] == "CREATED")
+        print("[ThreadManager] Stats:")
+        print(f"Running: {running}, Created: {created}")
+        return {"running": running, "created": created}
+
+    # ---------------- CLEAR ----------------
+    def clear_threads(self):
+        self.threads.clear()
+        self._log("Cleared all threads")
+
+    # ---------------- AUTO ----------------
+    def auto_restart(self):
+        for name, info in self.threads.items():
+            t = info["thread"]
+            if t and not t.is_alive():
+                new_t = threading.Thread(target=t._target, args=t._args, kwargs=t._kwargs, daemon=True)
+                self.threads[name]["thread"] = new_t
+                new_t.start()
+                self.threads[name]["status"] = "RUNNING"
+                self._log(f"Auto-restarted thread {name}")
+
+import os, time, json, psutil
+
+class MemoryManager:
+    def __init__(self, log_file="memory.log"):
+        self.log_file = log_file
+        self.allocations = {}
+        print("[MemoryManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[MemoryManager LOG]", message)
+
+    # ---------------- ALLOCATE ----------------
+    def allocate(self, name, size):
+        self.allocations[name] = {"size": size, "status": "ALLOCATED", "time": time.ctime()}
+        self._log(f"Allocated {size}MB for {name}")
+        return True
+
+    # ---------------- FREE ----------------
+    def free(self, name):
+        if name in self.allocations:
+            del self.allocations[name]
+            self._log(f"Freed memory for {name}")
+            return True
+        self._log(f"Allocation {name} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_allocations(self):
+        print("[MemoryManager] Current allocations:")
+        for name, info in self.allocations.items():
+            print(f" - {name}: {info['size']}MB | {info['status']} | {info['time']}")
+        return self.allocations
+
+    # ---------------- SEARCH ----------------
+    def search_allocations(self, keyword):
+        results = {n: i for n, i in self.allocations.items() if keyword.lower() in n.lower()}
+        print(f"[MemoryManager] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: {info['size']}MB | {info['status']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_allocations(self, filename="allocations.json"):
+        with open(filename, "w") as f:
+            json.dump(self.allocations, f, indent=4)
+        self._log(f"Exported allocations to {filename}")
+
+    def import_allocations(self, filename="allocations.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.allocations = json.load(f)
+        self._log(f"Imported allocations from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        total = sum(info["size"] for info in self.allocations.values())
+        count = len(self.allocations)
+        print("[MemoryManager] Stats:")
+        print(f"Total allocated: {total}MB, Count: {count}")
+        return {"total": total, "count": count}
+
+    # ---------------- CLEAR ----------------
+    def clear_allocations(self):
+        self.allocations.clear()
+        self._log("Cleared all allocations")
+
+    # ---------------- SYSTEM MEMORY ----------------
+    def system_memory(self):
+        mem = psutil.virtual_memory()
+        report = {
+            "total": round(mem.total / (1024*1024), 2),
+            "available": round(mem.available / (1024*1024), 2),
+            "used": round(mem.used / (1024*1024), 2),
+            "percent": mem.percent
+        }
+        self._log(f"System memory: {report}")
+        return report
+
+    # ---------------- AUTO ----------------
+    def auto_free(self, threshold=90):
+        mem = psutil.virtual_memory()
+        if mem.percent > threshold and self.allocations:
+            oldest = sorted(self.allocations.items(), key=lambda x: x[1]["time"])[0][0]
+            self.free(oldest)
+            self._log(f"Auto-freed oldest allocation {oldest} due to high usage")
+
+import os, time, json, shutil, psutil
+
+class StorageManager:
+    def __init__(self, log_file="storage.log"):
+        self.log_file = log_file
+        self.volumes = {}
+        print("[StorageManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[StorageManager LOG]", message)
+
+    # ---------------- REGISTER ----------------
+    def register_volume(self, name, path):
+        if not os.path.exists(path):
+            self._log(f"Path {path} not found")
+            return False
+        self.volumes[name] = {"path": path, "status": "REGISTERED", "time": time.ctime()}
+        self._log(f"Registered volume {name} → {path}")
+        return True
+
+    # ---------------- INFO ----------------
+    def volume_info(self, name):
+        if name not in self.volumes:
+            self._log(f"Volume {name} not found")
+            return None
+        path = self.volumes[name]["path"]
+        usage = psutil.disk_usage(path)
+        info = {
+            "total": round(usage.total / (1024*1024*1024), 2),
+            "used": round(usage.used / (1024*1024*1024), 2),
+            "free": round(usage.free / (1024*1024*1024), 2),
+            "percent": usage.percent
+        }
+        self._log(f"Volume info {name}: {info}")
+        return info
+
+    # ---------------- LIST ----------------
+    def list_volumes(self):
+        print("[StorageManager] Current volumes:")
+        for name, info in self.volumes.items():
+            print(f" - {name}: {info['path']} | {info['status']} | {info['time']}")
+        return self.volumes
+
+    # ---------------- DELETE ----------------
+    def delete_volume(self, name):
+        if name in self.volumes:
+            del self.volumes[name]
+            self._log(f"Deleted volume {name}")
+            return True
+        self._log(f"Volume {name} not found")
+        return False
+
+    # ---------------- SEARCH ----------------
+    def search_volumes(self, keyword):
+        results = {n: i for n, i in self.volumes.items() if keyword.lower() in n.lower()}
+        print(f"[StorageManager] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: {info['path']} | {info['status']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_volumes(self, filename="volumes.json"):
+        with open(filename, "w") as f:
+            json.dump(self.volumes, f, indent=4)
+        self._log(f"Exported volumes to {filename}")
+
+    def import_volumes(self, filename="volumes.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.volumes = json.load(f)
+        self._log(f"Imported volumes from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        count = len(self.volumes)
+        total_space = 0
+        used_space = 0
+        for name in self.volumes:
+            info = self.volume_info(name)
+            if info:
+                total_space += info["total"]
+                used_space += info["used"]
+        print("[StorageManager] Stats:")
+        print(f"Volumes: {count}, Total space: {total_space}GB, Used space: {used_space}GB")
+        return {"count": count, "total_space": total_space, "used_space": used_space}
+
+    # ---------------- CLEAR ----------------
+    def clear_volumes(self):
+        self.volumes.clear()
+        self._log("Cleared all volumes")
+
+    # ---------------- AUTO ----------------
+    def auto_cleanup(self, threshold=90):
+        for name in self.volumes:
+            info = self.volume_info(name)
+            if info and info["percent"] > threshold:
+                path = self.volumes[name]["path"]
+                try:
+                    for root, dirs, files in os.walk(path):
+                        for f in files:
+                            fp = os.path.join(root, f)
+                            if os.path.getsize(fp) < 1024*1024:  # küçük dosyaları sil
+                                os.remove(fp)
+                    self._log(f"Auto-cleaned small files in {name} due to high usage")
+                except Exception as e:
+                    self._log(f"Auto-cleanup failed for {name}: {e}")
+
+import os, time, json, socket, psutil
+
+class NetworkManager:
+    def __init__(self, log_file="network.log"):
+        self.log_file = log_file
+        self.connections = {}
+        print("[NetworkManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[NetworkManager LOG]", message)
+
+    # ---------------- CONNECT ----------------
+    def connect(self, name, host, port):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((host, port))
+            self.connections[name] = {"host": host, "port": port, "status": "CONNECTED", "time": time.ctime()}
+            self._log(f"Connected {name} → {host}:{port}")
+            return True
+        except Exception as e:
+            self._log(f"Failed to connect {name}: {e}")
+            return False
+
+    # ---------------- DISCONNECT ----------------
+    def disconnect(self, name):
+        if name in self.connections:
+            self.connections[name]["status"] = "DISCONNECTED"
+            self._log(f"Disconnected {name}")
+            return True
+        self._log(f"Connection {name} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_connections(self):
+        print("[NetworkManager] Current connections:")
+        for name, info in self.connections.items():
+            print(f" - {name}: {info['host']}:{info['port']} | {info['status']} | {info['time']}")
+        return self.connections
+
+    # ---------------- SEARCH ----------------
+    def search_connections(self, keyword):
+        results = {n: i for n, i in self.connections.items() if keyword.lower() in n.lower()}
+        print(f"[NetworkManager] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: {info['host']}:{info['port']} | {info['status']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_connections(self, filename="connections.json"):
+        with open(filename, "w") as f:
+            json.dump(self.connections, f, indent=4)
+        self._log(f"Exported connections to {filename}")
+
+    def import_connections(self, filename="connections.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.connections = json.load(f)
+        self._log(f"Imported connections from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        connected = sum(1 for c in self.connections.values() if c["status"] == "CONNECTED")
+        disconnected = sum(1 for c in self.connections.values() if c["status"] == "DISCONNECTED")
+        print("[NetworkManager] Stats:")
+        print(f"Connected: {connected}, Disconnected: {disconnected}")
+        return {"connected": connected, "disconnected": disconnected}
+
+    # ---------------- CLEAR ----------------
+    def clear_connections(self):
+        self.connections.clear()
+        self._log("Cleared all connections")
+
+    # ---------------- SYSTEM NET ----------------
+    def system_network(self):
+        net = psutil.net_io_counters()
+        report = {
+            "bytes_sent": net.bytes_sent,
+            "bytes_recv": net.bytes_recv,
+            "packets_sent": net.packets_sent,
+            "packets_recv": net.packets_recv
+        }
+        self._log(f"System network: {report}")
+        return report
+
+    # ---------------- AUTO ----------------
+    def auto_disconnect_high_usage(self, threshold=1000000000):
+        net = psutil.net_io_counters()
+        if net.bytes_recv > threshold:
+            for name in self.connections:
+                self.disconnect(name)
+            self._log("Auto-disconnected all connections due to high usage")
+
+import os, time, json, hashlib
+
+class UserManager:
+    def __init__(self, log_file="users.log"):
+        self.log_file = log_file
+        self.users = {}
+        print("[UserManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[UserManager LOG]", message)
+
+    # ---------------- ADD ----------------
+    def add_user(self, username, password, role="user"):
+        if username in self.users:
+            self._log(f"User {username} already exists")
+            return False
+        hashed = hashlib.sha256(password.encode()).hexdigest()
+        self.users[username] = {"password": hashed, "role": role, "status": "ACTIVE", "created": time.ctime()}
+        self._log(f"Added user {username} with role {role}")
+        return True
+
+    # ---------------- AUTH ----------------
+    def authenticate(self, username, password):
+        if username not in self.users:
+            self._log(f"Authentication failed for {username}")
+            return False
+        hashed = hashlib.sha256(password.encode()).hexdigest()
+        if self.users[username]["password"] == hashed and self.users[username]["status"] == "ACTIVE":
+            self._log(f"User {username} authenticated successfully")
+            return True
+        self._log(f"Authentication failed for {username}")
+        return False
+
+    # ---------------- UPDATE ----------------
+    def update_user(self, username, role=None, status=None):
+        if username not in self.users:
+            self._log(f"User {username} not found")
+            return False
+        if role: self.users[username]["role"] = role
+        if status: self.users[username]["status"] = status
+        self._log(f"Updated user {username}")
+        return True
+
+    # ---------------- DELETE ----------------
+    def delete_user(self, username):
+        if username in self.users:
+            del self.users[username]
+            self._log(f"Deleted user {username}")
+            return True
+        self._log(f"User {username} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_users(self):
+        print("[UserManager] Current users:")
+        for u, info in self.users.items():
+            print(f" - {u}: role {info['role']} | status {info['status']} | created {info['created']}")
+        return self.users
+
+    # ---------------- SEARCH ----------------
+    def search_users(self, keyword):
+        results = {u: i for u, i in self.users.items() if keyword.lower() in u.lower()}
+        print(f"[UserManager] Search results for '{keyword}':")
+        for u, info in results.items():
+            print(f" - {u}: role {info['role']} | status {info['status']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_users(self, filename="users.json"):
+        with open(filename, "w") as f:
+            json.dump(self.users, f, indent=4)
+        self._log(f"Exported users to {filename}")
+
+    def import_users(self, filename="users.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.users = json.load(f)
+        self._log(f"Imported users from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        active = sum(1 for u in self.users.values() if u["status"] == "ACTIVE")
+        disabled = sum(1 for u in self.users.values() if u["status"] == "DISABLED")
+        print("[UserManager] Stats:")
+        print(f"Active: {active}, Disabled: {disabled}, Total: {len(self.users)}")
+        return {"active": active, "disabled": disabled, "total": len(self.users)}
+
+    # ---------------- CLEAR ----------------
+    def clear_users(self):
+        self.users.clear()
+        self._log("Cleared all users")
+
+    # ---------------- AUTO ----------------
+    def auto_disable_inactive(self, threshold_days=30):
+        now = time.time()
+        for u, info in self.users.items():
+            created_time = time.mktime(time.strptime(info["created"]))
+            if (now - created_time) > threshold_days * 86400 and info["status"] == "ACTIVE":
+                info["status"] = "DISABLED"
+                self._log(f"Auto-disabled user {u} due to inactivity")
+
+import os, time, json
+
+class PermissionManager:
+    def __init__(self, log_file="permissions.log"):
+        self.log_file = log_file
+        self.permissions = {}
+        print("[PermissionManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[PermissionManager LOG]", message)
+
+    # ---------------- ADD ----------------
+    def add_permission(self, user, resource, level="read"):
+        key = f"{user}:{resource}"
+        self.permissions[key] = {"user": user, "resource": resource, "level": level, "time": time.ctime()}
+        self._log(f"Added permission {user} → {resource} ({level})")
+        return True
+
+    # ---------------- CHECK ----------------
+    def check_permission(self, user, resource, level="read"):
+        key = f"{user}:{resource}"
+        if key in self.permissions and self.permissions[key]["level"] == level:
+            self._log(f"Permission check passed for {user} on {resource} ({level})")
+            return True
+        self._log(f"Permission check failed for {user} on {resource} ({level})")
+        return False
+
+    # ---------------- UPDATE ----------------
+    def update_permission(self, user, resource, level):
+        key = f"{user}:{resource}"
+        if key in self.permissions:
+            self.permissions[key]["level"] = level
+            self._log(f"Updated permission {user} → {resource} ({level})")
+            return True
+        self._log(f"Permission {user}:{resource} not found")
+        return False
+
+    # ---------------- DELETE ----------------
+    def delete_permission(self, user, resource):
+        key = f"{user}:{resource}"
+        if key in self.permissions:
+            del self.permissions[key]
+            self._log(f"Deleted permission {user} → {resource}")
+            return True
+        self._log(f"Permission {user}:{resource} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_permissions(self):
+        print("[PermissionManager] Current permissions:")
+        for key, info in self.permissions.items():
+            print(f" - {info['user']} → {info['resource']} ({info['level']}) | {info['time']}")
+        return self.permissions
+
+    # ---------------- SEARCH ----------------
+    def search_permissions(self, keyword):
+        results = {k: v for k, v in self.permissions.items() if keyword.lower() in k.lower()}
+        print(f"[PermissionManager] Search results for '{keyword}':")
+        for k, v in results.items():
+            print(f" - {v['user']} → {v['resource']} ({v['level']})")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_permissions(self, filename="permissions.json"):
+        with open(filename, "w") as f:
+            json.dump(self.permissions, f, indent=4)
+        self._log(f"Exported permissions to {filename}")
+
+    def import_permissions(self, filename="permissions.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.permissions = json.load(f)
+        self._log(f"Imported permissions from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        read_count = sum(1 for p in self.permissions.values() if p["level"] == "read")
+        write_count = sum(1 for p in self.permissions.values() if p["level"] == "write")
+        admin_count = sum(1 for p in self.permissions.values() if p["level"] == "admin")
+        print("[PermissionManager] Stats:")
+        print(f"Read: {read_count}, Write: {write_count}, Admin: {admin_count}")
+        return {"read": read_count, "write": write_count, "admin": admin_count}
+
+    # ---------------- CLEAR ----------------
+    def clear_permissions(self):
+        self.permissions.clear()
+        self._log("Cleared all permissions")
+
+    # ---------------- AUTO ----------------
+    def auto_revoke_inactive(self, inactive_users):
+        for key, info in list(self.permissions.items()):
+            if info["user"] in inactive_users:
+                del self.permissions[key]
+                self._log(f"Auto-revoked permissions for inactive user {info['user']}")
+
+import os, time, json
+
+class RoleManager:
+    def __init__(self, log_file="roles.log"):
+        self.log_file = log_file
+        self.roles = {}
+        print("[RoleManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[RoleManager LOG]", message)
+
+    # ---------------- ADD ----------------
+    def add_role(self, name, permissions=None):
+        if name in self.roles:
+            self._log(f"Role {name} already exists")
+            return False
+        self.roles[name] = {"permissions": permissions or [], "time": time.ctime()}
+        self._log(f"Added role {name} with permissions {permissions}")
+        return True
+
+    # ---------------- UPDATE ----------------
+    def update_role(self, name, permissions):
+        if name not in self.roles:
+            self._log(f"Role {name} not found")
+            return False
+        self.roles[name]["permissions"] = permissions
+        self._log(f"Updated role {name} permissions → {permissions}")
+        return True
+
+    # ---------------- DELETE ----------------
+    def delete_role(self, name):
+        if name in self.roles:
+            del self.roles[name]
+            self._log(f"Deleted role {name}")
+            return True
+        self._log(f"Role {name} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_roles(self):
+        print("[RoleManager] Current roles:")
+        for name, info in self.roles.items():
+            print(f" - {name}: permissions {info['permissions']} | created {info['time']}")
+        return self.roles
+
+    # ---------------- SEARCH ----------------
+    def search_roles(self, keyword):
+        results = {n: i for n, i in self.roles.items() if keyword.lower() in n.lower()}
+        print(f"[RoleManager] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: permissions {info['permissions']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_roles(self, filename="roles.json"):
+        with open(filename, "w") as f:
+            json.dump(self.roles, f, indent=4)
+        self._log(f"Exported roles to {filename}")
+
+    def import_roles(self, filename="roles.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.roles = json.load(f)
+        self._log(f"Imported roles from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        count = len(self.roles)
+        total_permissions = sum(len(info["permissions"]) for info in self.roles.values())
+        print("[RoleManager] Stats:")
+        print(f"Roles: {count}, Total permissions: {total_permissions}")
+        return {"roles": count, "permissions": total_permissions}
+
+    # ---------------- CLEAR ----------------
+    def clear_roles(self):
+        self.roles.clear()
+        self._log("Cleared all roles")
+
+    # ---------------- AUTO ----------------
+    def auto_assign_default(self, users, default_role="user"):
+        for u in users:
+            if default_role in self.roles:
+                self._log(f"Auto-assigned {default_role} role to {u}")
+            else:
+                self._log(f"Default role {default_role} not found")
+
+import os, time, json, uuid
+
+class SessionManager:
+    def __init__(self, log_file="sessions.log"):
+        self.log_file = log_file
+        self.sessions = {}
+        print("[SessionManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[SessionManager LOG]", message)
+
+    # ---------------- CREATE ----------------
+    def create_session(self, user, metadata=None):
+        sid = str(uuid.uuid4())
+        self.sessions[sid] = {
+            "user": user,
+            "metadata": metadata or {},
+            "status": "ACTIVE",
+            "created": time.ctime(),
+            "last_access": time.ctime()
+        }
+        self._log(f"Created session {sid} for user {user}")
+        return sid
+
+    # ---------------- END ----------------
+    def end_session(self, sid):
+        if sid in self.sessions:
+            self.sessions[sid]["status"] = "ENDED"
+            self.sessions[sid]["last_access"] = time.ctime()
+            self._log(f"Ended session {sid}")
+            return True
+        self._log(f"Session {sid} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_sessions(self):
+        print("[SessionManager] Current sessions:")
+        for sid, info in self.sessions.items():
+            print(f" - {sid}: user {info['user']} | status {info['status']} | created {info['created']}")
+        return self.sessions
+
+    # ---------------- INFO ----------------
+    def session_info(self, sid):
+        if sid in self.sessions:
+            info = self.sessions[sid]
+            self._log(f"Retrieved info for session {sid}")
+            return info
+        self._log(f"Session {sid} not found")
+        return None
+
+    # ---------------- UPDATE ----------------
+    def update_session(self, sid, metadata):
+        if sid in self.sessions:
+            self.sessions[sid]["metadata"].update(metadata)
+            self.sessions[sid]["last_access"] = time.ctime()
+            self._log(f"Updated session {sid} metadata")
+            return True
+        self._log(f"Session {sid} not found")
+        return False
+
+    # ---------------- DELETE ----------------
+    def delete_session(self, sid):
+        if sid in self.sessions:
+            del self.sessions[sid]
+            self._log(f"Deleted session {sid}")
+            return True
+        self._log(f"Session {sid} not found")
+        return False
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_sessions(self, filename="sessions.json"):
+        with open(filename, "w") as f:
+            json.dump(self.sessions, f, indent=4)
+        self._log(f"Exported sessions to {filename}")
+
+    def import_sessions(self, filename="sessions.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.sessions = json.load(f)
+        self._log(f"Imported sessions from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        active = sum(1 for s in self.sessions.values() if s["status"] == "ACTIVE")
+        ended = sum(1 for s in self.sessions.values() if s["status"] == "ENDED")
+        print("[SessionManager] Stats:")
+        print(f"Active: {active}, Ended: {ended}, Total: {len(self.sessions)}")
+        return {"active": active, "ended": ended, "total": len(self.sessions)}
+
+    # ---------------- CLEAR ----------------
+    def clear_sessions(self):
+        self.sessions.clear()
+        self._log("Cleared all sessions")
+
+    # ---------------- AUTO ----------------
+    def auto_expire(self, timeout=3600):
+        now = time.time()
+        for sid, info in list(self.sessions.items()):
+            created_time = time.mktime(time.strptime(info["created"]))
+            if (now - created_time) > timeout and info["status"] == "ACTIVE":
+                info["status"] = "EXPIRED"
+                self._log(f"Auto-expired session {sid} due to timeout")
+
+import os, time, json
+
+class ConfigManager:
+    def __init__(self, log_file="config.log", config_file="config.json"):
+        self.log_file = log_file
+        self.config_file = config_file
+        self.config = {}
+        print("[ConfigManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[ConfigManager LOG]", message)
+
+    # ---------------- LOAD ----------------
+    def load_config(self):
+        if not os.path.exists(self.config_file):
+            self._log("Config file not found, starting empty")
+            self.config = {}
+            return
+        with open(self.config_file, "r") as f:
+            self.config = json.load(f)
+        self._log(f"Loaded config from {self.config_file}")
+
+    # ---------------- SAVE ----------------
+    def save_config(self):
+        with open(self.config_file, "w") as f:
+            json.dump(self.config, f, indent=4)
+        self._log(f"Saved config to {self.config_file}")
+
+    # ---------------- SET ----------------
+    def set_option(self, key, value):
+        self.config[key] = value
+        self._log(f"Set config {key} = {value}")
+        self.save_config()
+        return True
+
+    # ---------------- GET ----------------
+    def get_option(self, key, default=None):
+        value = self.config.get(key, default)
+        self._log(f"Retrieved config {key} = {value}")
+        return value
+
+    # ---------------- DELETE ----------------
+    def delete_option(self, key):
+        if key in self.config:
+            del self.config[key]
+            self._log(f"Deleted config {key}")
+            self.save_config()
+            return True
+        self._log(f"Config {key} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_options(self):
+        print("[ConfigManager] Current config options:")
+        for k, v in self.config.items():
+            print(f" - {k}: {v}")
+        return self.config
+
+    # ---------------- SEARCH ----------------
+    def search_options(self, keyword):
+        results = {k: v for k, v in self.config.items() if keyword.lower() in k.lower()}
+        print(f"[ConfigManager] Search results for '{keyword}':")
+        for k, v in results.items():
+            print(f" - {k}: {v}")
+        return results
+
+    # ---------------- CLEAR ----------------
+    def clear_config(self):
+        self.config.clear()
+        self._log("Cleared all config options")
+        self.save_config()
+
+    # ---------------- AUTO ----------------
+    def auto_reset(self, defaults):
+        self.config = defaults
+        self._log("Auto-reset config to defaults")
+        self.save_config()
+
+import os, time, json
+
+class UpdateManager:
+    def __init__(self, log_file="updates.log"):
+        self.log_file = log_file
+        self.updates = {}
+        print("[UpdateManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[UpdateManager LOG]", message)
+
+    # ---------------- ADD ----------------
+    def add_update(self, name, version, description=""):
+        self.updates[name] = {
+            "version": version,
+            "description": description,
+            "status": "PENDING",
+            "time": time.ctime()
+        }
+        self._log(f"Added update {name} v{version}")
+        return True
+
+    # ---------------- INSTALL ----------------
+    def install_update(self, name):
+        if name not in self.updates:
+            self._log(f"Update {name} not found")
+            return False
+        self.updates[name]["status"] = "INSTALLED"
+        self.updates[name]["time"] = time.ctime()
+        self._log(f"Installed update {name} v{self.updates[name]['version']}")
+        return True
+
+    # ---------------- REMOVE ----------------
+    def remove_update(self, name):
+        if name in self.updates:
+            del self.updates[name]
+            self._log(f"Removed update {name}")
+            return True
+        self._log(f"Update {name} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_updates(self):
+        print("[UpdateManager] Current updates:")
+        for name, info in self.updates.items():
+            print(f" - {name}: v{info['version']} | {info['status']} | {info['time']}")
+        return self.updates
+
+    # ---------------- SEARCH ----------------
+    def search_updates(self, keyword):
+        results = {n: i for n, i in self.updates.items() if keyword.lower() in n.lower()}
+        print(f"[UpdateManager] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: v{info['version']} | {info['status']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_updates(self, filename="updates.json"):
+        with open(filename, "w") as f:
+            json.dump(self.updates, f, indent=4)
+        self._log(f"Exported updates to {filename}")
+
+    def import_updates(self, filename="updates.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.updates = json.load(f)
+        self._log(f"Imported updates from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        pending = sum(1 for u in self.updates.values() if u["status"] == "PENDING")
+        installed = sum(1 for u in self.updates.values() if u["status"] == "INSTALLED")
+        print("[UpdateManager] Stats:")
+        print(f"Pending: {pending}, Installed: {installed}, Total: {len(self.updates)}")
+        return {"pending": pending, "installed": installed, "total": len(self.updates)}
+
+    # ---------------- CLEAR ----------------
+    def clear_updates(self):
+        self.updates.clear()
+        self._log("Cleared all updates")
+
+    # ---------------- AUTO ----------------
+    def auto_install(self):
+        for name, info in self.updates.items():
+            if info["status"] == "PENDING":
+                info["status"] = "INSTALLED"
+                info["time"] = time.ctime()
+                self._log(f"Auto-installed update {name} v{info['version']}")
+
+import os, time, json, threading
+
+class TaskManager:
+    def __init__(self, log_file="tasks.log"):
+        self.log_file = log_file
+        self.tasks = {}
+        print("[TaskManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[TaskManager LOG]", message)
+
+    # ---------------- ADD ----------------
+    def add_task(self, name, description="", interval=None):
+        self.tasks[name] = {
+            "description": description,
+            "interval": interval,
+            "status": "PENDING",
+            "created": time.ctime(),
+            "last_run": None
+        }
+        self._log(f"Added task {name} (interval={interval})")
+        return True
+
+    # ---------------- RUN ----------------
+    def run_task(self, name, target, *args, **kwargs):
+        if name not in self.tasks:
+            self._log(f"Task {name} not found")
+            return False
+        t = threading.Thread(target=target, args=args, kwargs=kwargs, daemon=True)
+        t.start()
+        self.tasks[name]["status"] = "RUNNING"
+        self.tasks[name]["last_run"] = time.ctime()
+        self._log(f"Started task {name}")
+        return True
+
+    # ---------------- COMPLETE ----------------
+    def complete_task(self, name):
+        if name in self.tasks:
+            self.tasks[name]["status"] = "COMPLETED"
+            self.tasks[name]["last_run"] = time.ctime()
+            self._log(f"Completed task {name}")
+            return True
+        self._log(f"Task {name} not found")
+        return False
+
+    # ---------------- DELETE ----------------
+    def delete_task(self, name):
+        if name in self.tasks:
+            del self.tasks[name]
+            self._log(f"Deleted task {name}")
+            return True
+        self._log(f"Task {name} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_tasks(self):
+        print("[TaskManager] Current tasks:")
+        for name, info in self.tasks.items():
+            print(f" - {name}: {info['status']} | interval={info['interval']} | created {info['created']}")
+        return self.tasks
+
+    # ---------------- SEARCH ----------------
+    def search_tasks(self, keyword):
+        results = {n: i for n, i in self.tasks.items() if keyword.lower() in n.lower()}
+        print(f"[TaskManager] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: {info['status']} | interval={info['interval']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_tasks(self, filename="tasks.json"):
+        with open(filename, "w") as f:
+            json.dump(self.tasks, f, indent=4)
+        self._log(f"Exported tasks to {filename}")
+
+    def import_tasks(self, filename="tasks.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.tasks = json.load(f)
+        self._log(f"Imported tasks from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        pending = sum(1 for t in self.tasks.values() if t["status"] == "PENDING")
+        running = sum(1 for t in self.tasks.values() if t["status"] == "RUNNING")
+        completed = sum(1 for t in self.tasks.values() if t["status"] == "COMPLETED")
+        print("[TaskManager] Stats:")
+        print(f"Pending: {pending}, Running: {running}, Completed: {completed}")
+        return {"pending": pending, "running": running, "completed": completed}
+
+    # ---------------- CLEAR ----------------
+    def clear_tasks(self):
+        self.tasks.clear()
+        self._log("Cleared all tasks")
+
+    # ---------------- AUTO ----------------
+    def auto_run(self):
+        for name, info in self.tasks.items():
+            if info["interval"] and info["status"] == "PENDING":
+                self.tasks[name]["status"] = "RUNNING"
+                self.tasks[name]["last_run"] = time.ctime()
+                self._log(f"Auto-ran task {name} (interval={info['interval']})")
+
+import os, time, json, threading
+
+class SchedulerManager:
+    def __init__(self, log_file="scheduler.log"):
+        self.log_file = log_file
+        self.schedules = {}
+        print("[SchedulerManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[SchedulerManager LOG]", message)
+
+    # ---------------- ADD ----------------
+    def add_schedule(self, name, interval, task):
+        self.schedules[name] = {
+            "interval": interval,
+            "task": task,
+            "status": "SCHEDULED",
+            "created": time.ctime(),
+            "last_run": None
+        }
+        self._log(f"Added schedule {name} (interval={interval}s)")
+        return True
+
+    # ---------------- RUN ----------------
+    def run_schedule(self, name):
+        if name not in self.schedules:
+            self._log(f"Schedule {name} not found")
+            return False
+        info = self.schedules[name]
+        def wrapper():
+            while info["status"] == "SCHEDULED":
+                info["task"]()
+                info["last_run"] = time.ctime()
+                self._log(f"Ran schedule {name}")
+                time.sleep(info["interval"])
+        t = threading.Thread(target=wrapper, daemon=True)
+        t.start()
+        self._log(f"Started schedule {name}")
+        return True
+
+    # ---------------- STOP ----------------
+    def stop_schedule(self, name):
+        if name in self.schedules:
+            self.schedules[name]["status"] = "STOPPED"
+            self._log(f"Stopped schedule {name}")
+            return True
+        self._log(f"Schedule {name} not found")
+        return False
+
+    # ---------------- DELETE ----------------
+    def delete_schedule(self, name):
+        if name in self.schedules:
+            del self.schedules[name]
+            self._log(f"Deleted schedule {name}")
+            return True
+        self._log(f"Schedule {name} not found")
+        return False
+
+    # ---------------- LIST ----------------
+    def list_schedules(self):
+        print("[SchedulerManager] Current schedules:")
+        for name, info in self.schedules.items():
+            print(f" - {name}: {info['status']} | interval={info['interval']}s | created {info['created']}")
+        return self.schedules
+
+    # ---------------- SEARCH ----------------
+    def search_schedules(self, keyword):
+        results = {n: i for n, i in self.schedules.items() if keyword.lower() in n.lower()}
+        print(f"[SchedulerManager] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: {info['status']} | interval={info['interval']}s")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_schedules(self, filename="schedules.json"):
+        with open(filename, "w") as f:
+            json.dump(self.schedules, f, indent=4)
+        self._log(f"Exported schedules to {filename}")
+
+    def import_schedules(self, filename="schedules.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.schedules = json.load(f)
+        self._log(f"Imported schedules from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        scheduled = sum(1 for s in self.schedules.values() if s["status"] == "SCHEDULED")
+        stopped = sum(1 for s in self.schedules.values() if s["status"] == "STOPPED")
+        print("[SchedulerManager] Stats:")
+        print(f"Scheduled: {scheduled}, Stopped: {stopped}, Total: {len(self.schedules)}")
+        return {"scheduled": scheduled, "stopped": stopped, "total": len(self.schedules)}
+
+    # ---------------- CLEAR ----------------
+    def clear_schedules(self):
+        self.schedules.clear()
+        self._log("Cleared all schedules")
+
+    # ---------------- AUTO ----------------
+    def auto_restart(self):
+        for name, info in self.schedules.items():
+            if info["status"] == "STOPPED":
+                info["status"] = "SCHEDULED"
+                self._log(f"Auto-restarted schedule {name}")
+
+import os, time, json
+
+class LoggerManager:
+    def __init__(self, log_file="system.log"):
+        self.log_file = log_file
+        self.logs = []
+        print("[LoggerManager] Initialized")
+
+    # ---------------- WRITE ----------------
+    def write_log(self, level, message):
+        entry = {
+            "time": time.ctime(),
+            "level": level.upper(),
+            "message": message
+        }
+        self.logs.append(entry)
+        with open(self.log_file, "a") as f:
+            f.write(f"{entry['time']} | {entry['level']} | {entry['message']}\n")
+        print(f"[LoggerManager {level.upper()}]", message)
+        return entry
+
+    # ---------------- INFO/ERROR/WARN ----------------
+    def info(self, message): return self.write_log("INFO", message)
+    def error(self, message): return self.write_log("ERROR", message)
+    def warn(self, message): return self.write_log("WARN", message)
+
+    # ---------------- LIST ----------------
+    def list_logs(self):
+        print("[LoggerManager] Current logs:")
+        for entry in self.logs:
+            print(f" - {entry['time']} | {entry['level']} | {entry['message']}")
+        return self.logs
+
+    # ---------------- SEARCH ----------------
+    def search_logs(self, keyword):
+        results = [e for e in self.logs if keyword.lower() in e["message"].lower()]
+        print(f"[LoggerManager] Search results for '{keyword}':")
+        for e in results:
+            print(f" - {e['time']} | {e['level']} | {e['message']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_logs(self, filename="logs.json"):
+        with open(filename, "w") as f:
+            json.dump(self.logs, f, indent=4)
+        self.info(f"Exported logs to {filename}")
+
+    def import_logs(self, filename="logs.json"):
+        if not os.path.exists(filename):
+            self.error("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.logs = json.load(f)
+        self.info(f"Imported logs from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        info_count = sum(1 for e in self.logs if e["level"] == "INFO")
+        warn_count = sum(1 for e in self.logs if e["level"] == "WARN")
+        error_count = sum(1 for e in self.logs if e["level"] == "ERROR")
+        print("[LoggerManager] Stats:")
+        print(f"Info: {info_count}, Warn: {warn_count}, Error: {error_count}")
+        return {"info": info_count, "warn": warn_count, "error": error_count}
+
+    # ---------------- CLEAR ----------------
+    def clear_logs(self):
+        self.logs.clear()
+        self.info("Cleared all logs")
+
+    # ---------------- AUTO ----------------
+    def auto_rotate(self, max_entries=1000):
+        if len(self.logs) > max_entries:
+            self.logs = self.logs[-max_entries:]
+            self.info(f"Auto-rotated logs, kept last {max_entries} entries")
+
+import os, time, json, hashlib
+
+class SecurityManager:
+    def __init__(self, log_file="security.log"):
+        self.log_file = log_file
+        self.rules = {}
+        print("[SecurityManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[SecurityManager LOG]", message)
+
+    # ---------------- ADD RULE ----------------
+    def add_rule(self, name, description, level="medium"):
+        self.rules[name] = {
+            "description": description,
+            "level": level,
+            "status": "ACTIVE",
+            "time": time.ctime()
+        }
+        self._log(f"Added security rule {name} ({level})")
+        return True
+
+    # ---------------- UPDATE RULE ----------------
+    def update_rule(self, name, description=None, level=None, status=None):
+        if name not in self.rules:
+            self._log(f"Rule {name} not found")
+            return False
+        if description: self.rules[name]["description"] = description
+        if level: self.rules[name]["level"] = level
+        if status: self.rules[name]["status"] = status
+        self._log(f"Updated rule {name}")
+        return True
+
+    # ---------------- DELETE RULE ----------------
+    def delete_rule(self, name):
+        if name in self.rules:
+            del self.rules[name]
+            self._log(f"Deleted rule {name}")
+            return True
+        self._log(f"Rule {name} not found")
+        return False
+
+    # ---------------- LIST RULES ----------------
+    def list_rules(self):
+        print("[SecurityManager] Current rules:")
+        for name, info in self.rules.items():
+            print(f" - {name}: {info['description']} | {info['level']} | {info['status']} | {info['time']}")
+        return self.rules
+
+    # ---------------- SEARCH RULES ----------------
+    def search_rules(self, keyword):
+        results = {n: i for n, i in self.rules.items() if keyword.lower() in n.lower()}
+        print(f"[SecurityManager] Search results for '{keyword}':")
+        for name, info in results.items():
+            print(f" - {name}: {info['description']} | {info['level']} | {info['status']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_rules(self, filename="rules.json"):
+        with open(filename, "w") as f:
+            json.dump(self.rules, f, indent=4)
+        self._log(f"Exported rules to {filename}")
+
+    def import_rules(self, filename="rules.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.rules = json.load(f)
+        self._log(f"Imported rules from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        active = sum(1 for r in self.rules.values() if r["status"] == "ACTIVE")
+        inactive = sum(1 for r in self.rules.values() if r["status"] != "ACTIVE")
+        print("[SecurityManager] Stats:")
+        print(f"Active: {active}, Inactive: {inactive}, Total: {len(self.rules)}")
+        return {"active": active, "inactive": inactive, "total": len(self.rules)}
+
+    # ---------------- CLEAR ----------------
+    def clear_rules(self):
+        self.rules.clear()
+        self._log("Cleared all rules")
+
+    # ---------------- AUTO ----------------
+    def auto_disable_high_risk(self):
+        for name, info in self.rules.items():
+            if info["level"] == "high" and info["status"] == "ACTIVE":
+                info["status"] = "DISABLED"
+                self._log(f"Auto-disabled high-risk rule {name}")
+
+import os, time, json, hashlib, uuid
+
+class AuthManager:
+    def __init__(self, log_file="auth.log"):
+        self.log_file = log_file
+        self.tokens = {}
+        print("[AuthManager] Initialized")
+
+    # ---------------- LOGGING ----------------
+    def _log(self, message):
+        entry = f"{time.ctime()} | {message}"
+        with open(self.log_file, "a") as f:
+            f.write(entry + "\n")
+        print("[AuthManager LOG]", message)
+
+    # ---------------- GENERATE TOKEN ----------------
+    def generate_token(self, user, secret):
+        token = hashlib.sha256(f"{user}{secret}{time.time()}".encode()).hexdigest()
+        self.tokens[token] = {
+            "user": user,
+            "status": "ACTIVE",
+            "created": time.ctime(),
+            "last_used": None
+        }
+        self._log(f"Generated token for {user}")
+        return token
+
+    # ---------------- VALIDATE TOKEN ----------------
+    def validate_token(self, token):
+        if token in self.tokens and self.tokens[token]["status"] == "ACTIVE":
+            self.tokens[token]["last_used"] = time.ctime()
+            self._log(f"Validated token {token[:8]}...")
+            return True
+        self._log(f"Invalid token {token[:8]}...")
+        return False
+
+    # ---------------- REVOKE TOKEN ----------------
+    def revoke_token(self, token):
+        if token in self.tokens:
+            self.tokens[token]["status"] = "REVOKED"
+            self._log(f"Revoked token {token[:8]}...")
+            return True
+        self._log(f"Token {token[:8]} not found")
+        return False
+
+    # ---------------- LIST TOKENS ----------------
+    def list_tokens(self):
+        print("[AuthManager] Current tokens:")
+        for t, info in self.tokens.items():
+            print(f" - {t[:8]}...: user {info['user']} | {info['status']} | created {info['created']}")
+        return self.tokens
+
+    # ---------------- SEARCH TOKENS ----------------
+    def search_tokens(self, keyword):
+        results = {t: i for t, i in self.tokens.items() if keyword.lower() in i["user"].lower()}
+        print(f"[AuthManager] Search results for '{keyword}':")
+        for t, info in results.items():
+            print(f" - {t[:8]}...: user {info['user']} | {info['status']}")
+        return results
+
+    # ---------------- EXPORT/IMPORT ----------------
+    def export_tokens(self, filename="tokens.json"):
+        with open(filename, "w") as f:
+            json.dump(self.tokens, f, indent=4)
+        self._log(f"Exported tokens to {filename}")
+
+    def import_tokens(self, filename="tokens.json"):
+        if not os.path.exists(filename):
+            self._log("Import file not found")
+            return
+        with open(filename, "r") as f:
+            self.tokens = json.load(f)
+        self._log(f"Imported tokens from {filename}")
+
+    # ---------------- STATS ----------------
+    def stats(self):
+        active = sum(1 for t in self.tokens.values() if t["status"] == "ACTIVE")
+        revoked = sum(1 for t in self.tokens.values() if t["status"] == "REVOKED")
+        print("[AuthManager] Stats:")
+        print(f"Active: {active}, Revoked: {revoked}, Total: {len(self.tokens)}")
+        return {"active": active, "revoked": revoked, "total": len(self.tokens)}
+
+    # ---------------- CLEAR ----------------
+    def clear_tokens(self):
+        self.tokens.clear()
+        self._log("Cleared all tokens")
+
+    # ---------------- AUTO ----------------
+    def auto_revoke_old(self, timeout=3600):
+        now = time.time()
+        for t, info in self.tokens.items():
+            created_time = time.mktime(time.strptime(info["created"]))
+            if (now - created_time) > timeout and info["status"] == "ACTIVE":
+                info["status"] = "REVOKED"
+                self._log(f"Auto-revoked token {t[:8]}... due to timeout")
+
+import json, os, time
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QTextEdit,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+# Backbone entegrasyonu için kernel parametresi
+import os, json, psutil
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QTextEdit,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Texter(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Texter - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        export_action = QAction("Export JSON", self)
+        export_action.triggered.connect(self.export_json)
+        file_menu.addAction(export_action)
+
+        import_action = QAction("Import JSON", self)
+        import_action.triggered.connect(self.import_json)
+        file_menu.addAction(import_action)
+
+        layout.setMenuBar(menubar)
+
+        # Editör
+        self.editor = QTextEdit()
+        layout.addWidget(self.editor)
+
+        # Audit log butonu
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        # Resource monitor butonu
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        # Process manager butonu
+        btn_proc = QPushButton("Process Kaydet")
+        btn_proc.clicked.connect(self.register_process)
+        layout.addWidget(btn_proc)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    # --- Fonksiyonlar ---
+    def new_file(self):
+        self.editor.clear()
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Texter")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "Text Files (*.txt)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                self.editor.setText(f.read())
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        if self.current_file:
+            with open(self.current_file, "w", encoding="utf-8") as f:
+                f.write(self.editor.toPlainText())
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Save File", self.current_file)
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "Text Files (*.txt)")
+            if fname:
+                with open(fname, "w", encoding="utf-8") as f:
+                    f.write(self.editor.toPlainText())
+                self.current_file = fname
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def export_json(self):
+        fname, _ = QFileDialog.getSaveFileName(self, "Export JSON", "", "JSON Files (*.json)")
+        if fname:
+            data = {"text": self.editor.toPlainText(), "file": self.current_file}
+            with open(fname, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Export JSON", fname)
+
+    def import_json(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Import JSON", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.editor.setText(data.get("text", ""))
+            self.current_file = data.get("file", None)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Import JSON", fname)
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Texter Action", "User edited text")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            cpu = psutil.cpu_percent()
+            mem = psutil.virtual_memory().percent
+            QMessageBox.information(self, "Resources", f"CPU: {cpu}%\nRAM: {mem}%")
+
+    def register_process(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "process_manager"):
+            name = os.path.basename(self.current_file)
+            self.kernel.process_manager.register_process(name, priority=5, group="Texter")
+            QMessageBox.information(self, "Process", f"{name} process olarak kaydedildi!")
+
+
+
+import json, os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QTableWidget, QTableWidgetItem,
+    QPushButton, QLabel, QFileDialog, QInputDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Biller(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Biller - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Tablo
+        self.table = QTableWidget(0, 2)
+        self.table.setHorizontalHeaderLabels(["Müşteri", "Tutar"])
+        layout.addWidget(self.table)
+
+        # Butonlar
+        btn_add = QPushButton("Fatura Ekle")
+        btn_add.clicked.connect(self.add_invoice)
+        layout.addWidget(btn_add)
+
+        btn_total = QPushButton("Toplam Hesapla")
+        btn_total.clicked.connect(self.calculate_total)
+        layout.addWidget(btn_total)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.total_label = QLabel("Toplam: 0")
+        layout.addWidget(self.total_label)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def add_invoice(self):
+        customer, ok1 = QInputDialog.getText(self, "Yeni Fatura", "Müşteri adı:")
+        if not ok1 or not customer:
+            return
+        amount, ok2 = QInputDialog.getDouble(self, "Yeni Fatura", "Tutar:", 0, 0, 1000000, 2)
+        if not ok2:
+            return
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        self.table.setItem(row, 0, QTableWidgetItem(customer))
+        self.table.setItem(row, 1, QTableWidgetItem(str(amount)))
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Add Invoice", f"{customer} - {amount}")
+
+    def calculate_total(self):
+        total = 0
+        for row in range(self.table.rowCount()):
+            try:
+                total += float(self.table.item(row, 1).text())
+            except:
+                pass
+        self.total_label.setText(f"Toplam: {total}")
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Calculate Total", str(total))
+
+    def new_file(self):
+        self.table.setRowCount(0)
+        self.total_label.setText("Toplam: 0")
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Biller")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.table.setRowCount(0)
+            for invoice in data.get("invoices", []):
+                row = self.table.rowCount()
+                self.table.insertRow(row)
+                self.table.setItem(row, 0, QTableWidgetItem(invoice["customer"]))
+                self.table.setItem(row, 1, QTableWidgetItem(str(invoice["amount"])))
+            self.total_label.setText(f"Toplam: {data.get('total', 0)}")
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        invoices = []
+        for row in range(self.table.rowCount()):
+            customer = self.table.item(row, 0).text()
+            amount = float(self.table.item(row, 1).text())
+            invoices.append({"customer": customer, "amount": amount})
+        total = sum(inv["amount"] for inv in invoices)
+        data = {"invoices": invoices, "total": total}
+
+        if self.current_file:
+            fname = self.current_file
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "JSON Files (*.json)")
+            if not fname:
+                return
+            self.current_file = fname
+
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Biller Action", "User modified invoices")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QFileDialog, QInputDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Notes(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Notes - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Not listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        # Butonlar
+        btn_add = QPushButton("Not Ekle")
+        btn_add.clicked.connect(self.add_note)
+        layout.addWidget(btn_add)
+
+        btn_delete = QPushButton("Seçili Notu Sil")
+        btn_delete.clicked.connect(self.delete_note)
+        layout.addWidget(btn_delete)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def add_note(self):
+        text, ok = QInputDialog.getText(self, "Yeni Not", "Not içeriği:")
+        if ok and text:
+            self.list.addItem(text)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Add Note", text)
+
+    def delete_note(self):
+        row = self.list.currentRow()
+        if row >= 0:
+            note = self.list.item(row).text()
+            self.list.takeItem(row)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Delete Note", note)
+
+    def new_file(self):
+        self.list.clear()
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Notes")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.list.clear()
+            for note in data.get("notes", []):
+                self.list.addItem(note)
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        notes = [self.list.item(i).text() for i in range(self.list.count())]
+        data = {"notes": notes}
+
+        if self.current_file:
+            fname = self.current_file
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "JSON Files (*.json)")
+            if not fname:
+                return
+            self.current_file = fname
+
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Notes Action", "User modified notes")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+import smtplib, imaplib, email, json
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QLineEdit, QPushButton, QListWidget,
+    QLabel, QMenuBar, QFileDialog, QMessageBox, QInputDialog
+)
+from PyQt6.QtGui import QAction
+
+class EmailClient(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("EmailClient - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Giriş alanları
+        self.email_input = QLineEdit()
+        self.email_input.setPlaceholderText("E-posta adresi")
+        self.pass_input = QLineEdit()
+        self.pass_input.setPlaceholderText("Şifre / Uygulama Şifresi")
+        self.pass_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.smtp_input = QLineEdit()
+        self.smtp_input.setPlaceholderText("SMTP sunucusu (örn: smtp.gmail.com)")
+        self.imap_input = QLineEdit()
+        self.imap_input.setPlaceholderText("IMAP sunucusu (örn: imap.gmail.com)")
+        self.port_input = QLineEdit()
+        self.port_input.setPlaceholderText("SMTP port (örn: 587)")
+
+        btn_login = QPushButton("Hesap Aç")
+        btn_login.clicked.connect(self.login)
+
+        layout.addWidget(self.email_input)
+        layout.addWidget(self.pass_input)
+        layout.addWidget(self.smtp_input)
+        layout.addWidget(self.imap_input)
+        layout.addWidget(self.port_input)
+        layout.addWidget(btn_login)
+
+        # Gelen kutusu
+        self.inbox = QListWidget()
+        layout.addWidget(self.inbox)
+
+        btn_fetch = QPushButton("Postaları Getir")
+        btn_fetch.clicked.connect(self.fetch_mails)
+        layout.addWidget(btn_fetch)
+
+        btn_compose = QPushButton("Yeni Mail")
+        btn_compose.clicked.connect(self.compose_mail)
+        layout.addWidget(btn_compose)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+
+        # Hesap bilgileri
+        self.email = None
+        self.password = None
+        self.smtp_server = None
+        self.imap_server = None
+        self.smtp_port = None
+
+    def login(self):
+        self.email = self.email_input.text()
+        self.password = self.pass_input.text()
+        self.smtp_server = self.smtp_input.text()
+        self.imap_server = self.imap_input.text()
+        try:
+            self.smtp_port = int(self.port_input.text())
+        except:
+            self.smtp_port = 587
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Login", self.email)
+
+    def fetch_mails(self):
+        try:
+            mail = imaplib.IMAP4_SSL(self.imap_server)
+            mail.login(self.email, self.password)
+            mail.select("inbox")
+            result, data = mail.search(None, "ALL")
+            ids = data[0].split()
+            self.inbox.clear()
+            for i in ids[-10:]:  # son 10 mail
+                result, msg_data = mail.fetch(i, "(RFC822)")
+                raw_email = msg_data[0][1]
+                msg = email.message_from_bytes(raw_email)
+                subject = msg["subject"]
+                self.inbox.addItem(subject if subject else "(No Subject)")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Fetch Mails", f"{len(ids)} mails fetched")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Mail fetch failed: {e}")
+
+    def compose_mail(self):
+        to, ok1 = QInputDialog.getText(self, "Yeni Mail", "Alıcı:")
+        if not ok1 or not to:
+            return
+        subject, ok2 = QInputDialog.getText(self, "Yeni Mail", "Konu:")
+        if not ok2 or not subject:
+            return
+        body, ok3 = QInputDialog.getText(self, "Yeni Mail", "Mesaj:")
+        if not ok3 or not body:
+            return
+        try:
+            msg = MIMEMultipart()
+            msg["From"] = self.email
+            msg["To"] = to
+            msg["Subject"] = subject
+            msg.attach(MIMEText(body, "plain"))
+            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+            server.starttls()
+            server.login(self.email, self.password)
+            server.sendmail(self.email, to, msg.as_string())
+            server.quit()
+            QMessageBox.information(self, "Mail", "Mail başarıyla gönderildi!")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Compose Mail", subject)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Mail send failed: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("EmailClient Action", "User interacted with email client")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+import json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QLabel,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Dictionary(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Dictionary - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Arama alanı
+        self.word_input = QLineEdit()
+        self.word_input.setPlaceholderText("Kelime gir")
+        layout.addWidget(self.word_input)
+
+        btn_search = QPushButton("Ara")
+        btn_search.clicked.connect(self.search_word)
+        layout.addWidget(btn_search)
+
+        self.result_label = QLabel("Tanım: ")
+        layout.addWidget(self.result_label)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+        # Basit JSON sözlük
+        self.data = {
+            "python": "Yüksek seviyeli programlama dili.",
+            "qt": "C++ tabanlı GUI framework.",
+            "ai": "Yapay zeka, öğrenen sistemler."
+        }
+
+    def search_word(self):
+        word = self.word_input.text().lower()
+        meaning = self.data.get(word, "Bulunamadı")
+        self.result_label.setText(f"Tanım: {meaning}")
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Search Word", word)
+
+    def new_file(self):
+        self.data.clear()
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Dictionary")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                self.data = json.load(f)
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        if self.current_file:
+            fname = self.current_file
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "JSON Files (*.json)")
+            if not fname:
+                return
+            self.current_file = fname
+
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(self.data, f, indent=2)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Dictionary Action", "User searched dictionary")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+import json, requests
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QPushButton,
+    QLabel, QComboBox, QMessageBox, QFileDialog
+)
+from PyQt6.QtGui import QAction
+
+class Translator(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Translator - Flourescent OS (Web API)")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Çeviri alanı
+        self.text_input = QLineEdit()
+        self.text_input.setPlaceholderText("Çevrilecek metin")
+        layout.addWidget(self.text_input)
+
+        self.lang_box = QComboBox()
+        self.lang_box.addItems(["en", "tr", "de", "fr", "es"])
+        layout.addWidget(self.lang_box)
+
+        btn_translate = QPushButton("Çevir (Web)")
+        btn_translate.clicked.connect(self.translate)
+        layout.addWidget(btn_translate)
+
+        self.result_label = QLabel("Sonuç: ")
+        layout.addWidget(self.result_label)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def translate(self):
+        text = self.text_input.text()
+        target_lang = self.lang_box.currentText()
+        try:
+            response = requests.post(
+                "https://libretranslate.de/translate",
+                data={
+                    "q": text,
+                    "source": "auto",
+                    "target": target_lang,
+                    "format": "text"
+                }
+            )
+            if response.status_code == 200:
+                result = response.json().get("translatedText", "")
+                self.result_label.setText(f"Sonuç: {result}")
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Translate Web", f"{text} -> {result}")
+            else:
+                self.result_label.setText("Çeviri başarısız oldu.")
+        except Exception as e:
+            self.result_label.setText(f"Hata: {e}")
+
+    def new_file(self):
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Translator")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.text_input.setText(data.get("text", ""))
+            self.result_label.setText(data.get("result", "Sonuç: "))
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        data = {"text": self.text_input.text(), "result": self.result_label.text()}
+        if self.current_file:
+            fname = self.current_file
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "JSON Files (*.json)")
+            if not fname:
+                return
+            self.current_file = fname
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Translator Action", "User translated text via web")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import json, requests
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QPushButton,
+    QLabel, QMessageBox, QFileDialog
+)
+from PyQt6.QtGui import QAction
+
+class Weather(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Weather - Flourescent OS (Web API)")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Şehir giriş alanı
+        self.city_input = QLineEdit()
+        self.city_input.setPlaceholderText("Şehir gir")
+        layout.addWidget(self.city_input)
+
+        btn_check = QPushButton("Hava Durumu (Web)")
+        btn_check.clicked.connect(self.check_weather)
+        layout.addWidget(btn_check)
+
+        self.result_label = QLabel("Durum: ")
+        layout.addWidget(self.result_label)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def check_weather(self):
+        city = self.city_input.text().lower()
+        try:
+            api_key = os.getenv("OPENWEATHER_API_KEY", "")  # API anahtarı ortam değişkeninden
+            if not api_key:
+                self.result_label.setText("API anahtarı bulunamadı.")
+                return
+            url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=tr"
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                desc = data["weather"][0]["description"]
+                temp = data["main"]["temp"]
+                result = f"{city.title()}: {desc}, {temp}°C"
+                self.result_label.setText(f"Durum: {result}")
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Weather Check", result)
+            else:
+                self.result_label.setText("Veri alınamadı.")
+        except Exception as e:
+            self.result_label.setText(f"Hata: {e}")
+
+    def new_file(self):
+        self.city_input.clear()
+        self.result_label.setText("Durum: ")
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Weather")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "JSON Files (*.json)")
+        if fname:
+            with open(fname, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.city_input.setText(data.get("city", ""))
+            self.result_label.setText(data.get("result", "Durum: "))
+            self.current_file = fname
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open File", fname)
+
+    def save_file(self):
+        data = {"city": self.city_input.text(), "result": self.result_label.text()}
+        if self.current_file:
+            fname = self.current_file
+        else:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "JSON Files (*.json)")
+            if not fname:
+                return
+            self.current_file = fname
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Save File", fname)
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Weather Action", "User checked weather via web")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+import json, requests, xml.etree.ElementTree as ET
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class NewsReader(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("News Reader - Flourescent OS (TR Web)")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        refresh_action = QAction("Yenile", self)
+        refresh_action.triggered.connect(self.load_news)
+        file_menu.addAction(refresh_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Haber listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        btn_load = QPushButton("Haberleri Yükle (TR)")
+        btn_load.clicked.connect(self.load_news)
+        layout.addWidget(btn_load)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def load_news(self):
+        try:
+            sources = [
+                "https://www.mynet.com/haber/rss",
+                "https://www.ntv.com.tr/rss",
+                "https://www.hurriyet.com.tr/rss",
+                "https://www.sozcu.com.tr/rss",
+                "https://www.milliyet.com.tr/rss"
+            ]
+            self.list.clear()
+            for url in sources:
+                try:
+                    response = requests.get(url, timeout=5)
+                    if response.status_code == 200:
+                        root = ET.fromstring(response.content)
+                        items = root.findall(".//item")
+                        for item in items[:3]:  # her kaynaktan ilk 3 haber
+                            title = item.find("title").text
+                            self.list.addItem(title if title else "(Başlık yok)")
+                except Exception as e:
+                    self.list.addItem(f"{url} hata: {e}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Load News", "TR sources loaded")
+        except Exception as e:
+            self.list.clear()
+            self.list.addItem(f"Hata: {e}")
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+        else:
+            QMessageBox.information(self, "Sync", "Kaydedilmiş dosya yok")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("NewsReader Action", "User loaded TR news")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import json, os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QPushButton, QMessageBox
+)
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtGui import QAction
+from PyQt6.QtCore import QUrl
+
+class Maps(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel   # Backbone kernel entegrasyonu (opsiyonel)
+        self.setWindowTitle("Maps - Flourescent OS (Web)")
+        self.resize(900, 600)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Adres giriş alanı
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("Adres gir (örn: İstanbul)")
+        layout.addWidget(self.url_input)
+
+        btn_go = QPushButton("Git (Google Maps)")
+        btn_go.clicked.connect(self.load_map)
+        layout.addWidget(btn_go)
+
+        self.browser = QWebEngineView()
+        layout.addWidget(self.browser)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def load_map(self):
+        place = self.url_input.text()
+        if place:
+            try:
+                url = QUrl(f"https://www.google.com/maps/search/{place}")
+                self.browser.setUrl(url)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Load Map", place)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Map load failed: {e}")
+
+    def new_file(self):
+        self.url_input.clear()
+        self.browser.setUrl(QUrl("about:blank"))
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Maps")
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            self.kernel.file_sync_manager.sync_file(self.current_file)
+            self.kernel.audit_manager.record("Sync File", self.current_file)
+            QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+        else:
+            QMessageBox.information(self, "Sync", "Kaydedilmiş dosya yok")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Maps Action", "User searched map")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QPushButton,
+    QTabWidget, QMessageBox, QHBoxLayout, QListWidget
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtCore import QUrl
+
+class Browser(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Tabbed Browser - Flourescent OS")
+        self.resize(1200, 800)
+        layout = QVBoxLayout()
+
+        # Menü çubuğu
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni Sekme", self)
+        new_action.triggered.connect(self.new_tab)
+        file_menu.addAction(new_action)
+
+        bookmark_action = QAction("Yer İmleri", self)
+        bookmark_action.triggered.connect(self.show_bookmarks)
+        file_menu.addAction(bookmark_action)
+
+        history_action = QAction("Geçmiş", self)
+        history_action.triggered.connect(self.show_history)
+        file_menu.addAction(history_action)
+
+        layout.setMenuBar(menubar)
+
+        # URL bar
+        bar_layout = QHBoxLayout()
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("URL gir (örn: https://mynet.com)")
+        bar_layout.addWidget(self.url_input)
+
+        btn_go = QPushButton("Git")
+        btn_go.clicked.connect(self.load_page)
+        bar_layout.addWidget(btn_go)
+
+        btn_bookmark = QPushButton("Yer İmine Ekle")
+        btn_bookmark.clicked.connect(self.add_bookmark)
+        bar_layout.addWidget(btn_bookmark)
+
+        layout.addLayout(bar_layout)
+
+        # Sekmeler
+        self.tabs = QTabWidget()
+        self.tabs.setTabsClosable(True)
+        self.tabs.tabCloseRequested.connect(self.close_tab)
+        layout.addWidget(self.tabs)
+
+        # İlk sekme
+        self.new_tab()
+
+        # Audit ve kaynak butonları
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+
+        # Yer imleri ve geçmiş
+        self.bookmarks = []
+        self.history = []
+
+    def new_tab(self, url="about:blank"):
+        browser = QWebEngineView()
+        browser.setUrl(QUrl(url))
+        index = self.tabs.addTab(browser, "Yeni Sekme")
+        self.tabs.setCurrentIndex(index)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New Tab", url)
+
+    def close_tab(self, index):
+        self.tabs.removeTab(index)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Close Tab", str(index))
+
+    def load_page(self):
+        url = self.url_input.text()
+        if not url.startswith("http"):
+            url = "https://" + url
+        try:
+            current_browser = self.tabs.currentWidget()
+            current_browser.setUrl(QUrl(url))
+            self.tabs.setTabText(self.tabs.currentIndex(), url)
+            self.history.append(url)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Load Page", url)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Page load failed: {e}")
+
+    def add_bookmark(self):
+        url = self.url_input.text()
+        if url:
+            self.bookmarks.append(url)
+            QMessageBox.information(self, "Bookmark", f"{url} yer imlerine eklendi!")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Add Bookmark", url)
+
+    def show_bookmarks(self):
+        dlg = QListWidget()
+        dlg.setWindowTitle("Yer İmleri")
+        for bm in self.bookmarks:
+            dlg.addItem(bm)
+        dlg.show()
+
+    def show_history(self):
+        dlg = QListWidget()
+        dlg.setWindowTitle("Geçmiş")
+        for h in self.history:
+            dlg.addItem(h)
+        dlg.show()
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Browser Action", "User browsed with tabs/bookmarks/history")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtCore import QUrl
+
+import os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtCore import QUrl
+
+class MusicPlayer(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Music Player - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Şarkı Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        layout.setMenuBar(menubar)
+
+        # Playlist
+        self.playlist = QListWidget()
+        layout.addWidget(self.playlist)
+
+        # Kontroller
+        btn_play = QPushButton("▶ Oynat")
+        btn_play.clicked.connect(self.play_song)
+        layout.addWidget(btn_play)
+
+        btn_pause = QPushButton("⏸ Duraklat")
+        btn_pause.clicked.connect(self.pause_song)
+        layout.addWidget(btn_pause)
+
+        btn_stop = QPushButton("⏹ Durdur")
+        btn_stop.clicked.connect(self.stop_song)
+        layout.addWidget(btn_stop)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+        # Media player
+        self.player = QMediaPlayer()
+        self.audio_output = QAudioOutput()
+        self.player.setAudioOutput(self.audio_output)
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Şarkı Aç", "", "Audio Files (*.mp3 *.wav)")
+        if fname:
+            self.playlist.addItem(fname)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open Song", fname)
+
+    def play_song(self):
+        current = self.playlist.currentItem()
+        if current:
+            url = QUrl.fromLocalFile(current.text())
+            self.player.setSource(url)
+            self.player.play()
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Play Song", current.text())
+        else:
+            QMessageBox.warning(self, "Play", "Lütfen bir şarkı seçin!")
+
+    def pause_song(self):
+        self.player.pause()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Pause Song", "Paused")
+
+    def stop_song(self):
+        self.player.stop()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Stop Song", "Stopped")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("MusicPlayer Action", "User interacted with music player")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+import os, shutil, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class FileManager(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("File Manager - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Klasör Aç", self)
+        open_action.triggered.connect(self.open_folder)
+        file_menu.addAction(open_action)
+
+        layout.setMenuBar(menubar)
+
+        # Dosya listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        # Kontroller
+        btn_delete = QPushButton("Sil")
+        btn_delete.clicked.connect(self.delete_file)
+        layout.addWidget(btn_delete)
+
+        btn_copy = QPushButton("Kopyala")
+        btn_copy.clicked.connect(self.copy_file)
+        layout.addWidget(btn_copy)
+
+        btn_sync = QPushButton("Senkronize Et")
+        btn_sync.clicked.connect(self.sync_file)
+        layout.addWidget(btn_sync)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_folder = None
+
+    def open_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, "Klasör Aç")
+        if folder:
+            self.current_folder = folder
+            self.list.clear()
+            try:
+                for f in os.listdir(folder):
+                    self.list.addItem(f)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Open Folder", folder)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Klasör açılamadı: {e}")
+
+    def delete_file(self):
+        current = self.list.currentItem()
+        if current and self.current_folder:
+            path = os.path.join(self.current_folder, current.text())
+            try:
+                os.remove(path)
+                self.list.takeItem(self.list.currentRow())
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Delete File", path)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Silinemedi: {e}")
+
+    def copy_file(self):
+        current = self.list.currentItem()
+        if current and self.current_folder:
+            src = os.path.join(self.current_folder, current.text())
+            dest, _ = QFileDialog.getSaveFileName(self, "Kopya Kaydet", current.text())
+            if dest:
+                try:
+                    shutil.copy(src, dest)
+                    if self.kernel and hasattr(self.kernel, "audit_manager"):
+                        self.kernel.audit_manager.record("Copy File", f"{src} -> {dest}")
+                except Exception as e:
+                    QMessageBox.warning(self, "Error", f"Kopyalanamadı: {e}")
+
+    def sync_file(self):
+        current = self.list.currentItem()
+        if current and self.current_folder and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            path = os.path.join(self.current_folder, current.text())
+            try:
+                self.kernel.file_sync_manager.sync_file(path)
+                self.kernel.audit_manager.record("Sync File", path)
+                QMessageBox.information(self, "Sync", f"{path} senkronize edildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Senkronizasyon hatası: {e}")
+        else:
+            QMessageBox.information(self, "Sync", "Dosya seçilmedi veya sync desteklenmiyor")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("FileManager Action", "User managed files")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, subprocess
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QTextEdit,
+    QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Terminal(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Terminal - Flourescent OS")
+        self.resize(900, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        clear_action = QAction("Temizle", self)
+        clear_action.triggered.connect(self.clear_output)
+        file_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Komut giriş alanı
+        self.cmd_input = QLineEdit()
+        self.cmd_input.setPlaceholderText("Komut gir (örn: dir / ls)")
+        layout.addWidget(self.cmd_input)
+
+        btn_run = QPushButton("Çalıştır")
+        btn_run.clicked.connect(self.run_command)
+        layout.addWidget(btn_run)
+
+        # Çıktı alanı
+        self.output = QTextEdit()
+        self.output.setReadOnly(True)
+        layout.addWidget(self.output)
+
+        # Audit ve kaynak butonları
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+
+    def run_command(self):
+        cmd = self.cmd_input.text()
+        if not cmd.strip():
+            QMessageBox.warning(self, "Komut", "Lütfen bir komut girin!")
+            return
+        try:
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            self.output.append(f"$ {cmd}\n{result.stdout}{result.stderr}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Run Command", cmd)
+        except Exception as e:
+            self.output.append(f"Hata: {e}")
+
+    def clear_output(self):
+        self.output.clear()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Output", "Terminal")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Terminal Action", "User executed command")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+
+import os, subprocess
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit, QPushButton,
+    QListWidget, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class PackageManager(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Package Manager - Flourescent OS")
+        self.resize(700, 500)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("İşlem")
+
+        refresh_action = QAction("Yüklü Paketleri Yenile", self)
+        refresh_action.triggered.connect(self.refresh_packages)
+        file_menu.addAction(refresh_action)
+
+        layout.setMenuBar(menubar)
+
+        # Paket listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        # Paket adı giriş
+        self.pkg_input = QLineEdit()
+        self.pkg_input.setPlaceholderText("Paket adı gir (örn: numpy)")
+        layout.addWidget(self.pkg_input)
+
+        # Kontroller
+        btn_install = QPushButton("Yükle")
+        btn_install.clicked.connect(self.install_package)
+        layout.addWidget(btn_install)
+
+        btn_update = QPushButton("Güncelle")
+        btn_update.clicked.connect(self.update_package)
+        layout.addWidget(btn_update)
+
+        btn_remove = QPushButton("Kaldır")
+        btn_remove.clicked.connect(self.remove_package)
+        layout.addWidget(btn_remove)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+    def refresh_packages(self):
+        try:
+            result = subprocess.run(["pip", "list"], capture_output=True, text=True)
+            self.list.clear()
+            lines = result.stdout.splitlines()
+            for line in lines[2:]:  # ilk iki satır başlık
+                self.list.addItem(line)
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Refresh Packages", "Listed installed packages")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Paket listesi alınamadı: {e}")
+
+    def install_package(self):
+        pkg = self.pkg_input.text().strip()
+        if pkg:
+            try:
+                subprocess.run(["pip", "install", pkg], check=True)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Install Package", pkg)
+                QMessageBox.information(self, "Install", f"{pkg} yüklendi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"{pkg} yüklenemedi: {e}")
+
+    def update_package(self):
+        pkg = self.pkg_input.text().strip()
+        if pkg:
+            try:
+                subprocess.run(["pip", "install", "--upgrade", pkg], check=True)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Update Package", pkg)
+                QMessageBox.information(self, "Update", f"{pkg} güncellendi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"{pkg} güncellenemedi: {e}")
+
+    def remove_package(self):
+        pkg = self.pkg_input.text().strip()
+        if pkg:
+            try:
+                subprocess.run(["pip", "uninstall", "-y", pkg], check=True)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Remove Package", pkg)
+                QMessageBox.information(self, "Remove", f"{pkg} kaldırıldı!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"{pkg} kaldırılamadı: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("PackageManager Action", "User managed packages")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+import os, subprocess, sys
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QFileDialog, QTextEdit, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class ScriptRunner(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Script Runner - Flourescent OS")
+        self.resize(800, 500)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Script Aç", self)
+        open_action.triggered.connect(self.open_script)
+        file_menu.addAction(open_action)
+
+        layout.setMenuBar(menubar)
+
+        # Çıktı alanı
+        self.output = QTextEdit()
+        self.output.setReadOnly(True)
+        layout.addWidget(self.output)
+
+        # Kontroller
+        btn_run = QPushButton("Çalıştır")
+        btn_run.clicked.connect(self.run_script)
+        layout.addWidget(btn_run)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_script = None
+
+    def open_script(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Script Aç", "", "Scripts (*.py *.sh *.bat)")
+        if fname:
+            self.current_script = fname
+            self.output.append(f"Seçilen script: {fname}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Open Script", fname)
+
+    def run_script(self):
+        if self.current_script:
+            try:
+                # Python script ise güvenli çalıştırma
+                if self.current_script.endswith(".py"):
+                    result = subprocess.run([sys.executable, self.current_script], capture_output=True, text=True)
+                else:
+                    result = subprocess.run(self.current_script, shell=True, capture_output=True, text=True)
+
+                self.output.append(f"$ {self.current_script}\n{result.stdout}{result.stderr}")
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Run Script", self.current_script)
+            except Exception as e:
+                self.output.append(f"Hata: {e}")
+        else:
+            QMessageBox.warning(self, "Çalıştır", "Önce bir script seçin!")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("ScriptRunner Action", "User executed script")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QComboBox, QSlider, QMessageBox
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtCore import Qt
+
+class ControlPanel(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Control Panel - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Ayarlar")
+
+        reset_action = QAction("Varsayılanlara Dön", self)
+        reset_action.triggered.connect(self.reset_defaults)
+        file_menu.addAction(reset_action)
+
+        layout.setMenuBar(menubar)
+
+        # Tema seçimi
+        self.theme_box = QComboBox()
+        self.theme_box.addItems(["Aydınlık", "Karanlık", "Retro"])
+        layout.addWidget(self.theme_box)
+
+        btn_theme = QPushButton("Tema Uygula")
+        btn_theme.clicked.connect(self.apply_theme)
+        layout.addWidget(btn_theme)
+
+        # Ses kontrolü
+        self.volume_slider = QSlider(Qt.Orientation.Horizontal)
+        self.volume_slider.setRange(0, 100)
+        self.volume_slider.setValue(50)
+        layout.addWidget(self.volume_slider)
+
+        btn_volume = QPushButton("Ses Ayarla")
+        btn_volume.clicked.connect(self.set_volume)
+        layout.addWidget(btn_volume)
+
+        # Güç seçenekleri
+        btn_shutdown = QPushButton("Kapat")
+        btn_shutdown.clicked.connect(self.shutdown)
+        layout.addWidget(btn_shutdown)
+
+        btn_restart = QPushButton("Yeniden Başlat")
+        btn_restart.clicked.connect(self.restart)
+        layout.addWidget(btn_restart)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+    def apply_theme(self):
+        theme = self.theme_box.currentText()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Apply Theme", theme)
+        QMessageBox.information(self, "Tema", f"{theme} teması uygulandı!")
+
+    def set_volume(self):
+        vol = self.volume_slider.value()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Set Volume", str(vol))
+        QMessageBox.information(self, "Ses", f"Ses seviyesi {vol}% olarak ayarlandı.")
+
+    def shutdown(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Shutdown", "System shutting down")
+        QMessageBox.information(self, "Güç", "Sistem kapatılıyor...")
+
+    def restart(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Restart", "System restarting")
+        QMessageBox.information(self, "Güç", "Sistem yeniden başlatılıyor...")
+
+    def reset_defaults(self):
+        self.theme_box.setCurrentIndex(0)
+        self.volume_slider.setValue(50)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Reset Defaults", "Settings reset")
+        QMessageBox.information(self, "Ayarlar", "Varsayılan ayarlara dönüldü.")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("ControlPanel Action", "User changed settings")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QCalendarWidget,
+    QPushButton, QLineEdit, QListWidget, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class CalendarApp(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Calendar - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Etkinlik")
+
+        clear_action = QAction("Tümünü Temizle", self)
+        clear_action.triggered.connect(self.clear_events)
+        file_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Takvim widget
+        self.calendar = QCalendarWidget()
+        layout.addWidget(self.calendar)
+
+        # Etkinlik giriş alanı
+        self.event_input = QLineEdit()
+        self.event_input.setPlaceholderText("Etkinlik gir (örn: Matematik dersi)")
+        layout.addWidget(self.event_input)
+
+        btn_add = QPushButton("Etkinlik Ekle")
+        btn_add.clicked.connect(self.add_event)
+        layout.addWidget(btn_add)
+
+        # Etkinlik listesi
+        self.event_list = QListWidget()
+        layout.addWidget(self.event_list)
+
+        btn_delete = QPushButton("Seçili Etkinliği Sil")
+        btn_delete.clicked.connect(self.delete_event)
+        layout.addWidget(btn_delete)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.events = {}
+
+    def add_event(self):
+        date = self.calendar.selectedDate().toString("yyyy-MM-dd")
+        event = self.event_input.text().strip()
+        if event:
+            if date not in self.events:
+                self.events[date] = []
+            self.events[date].append(event)
+            self.event_list.addItem(f"{date}: {event}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Add Event", f"{date} - {event}")
+
+    def delete_event(self):
+        current = self.event_list.currentItem()
+        if current:
+            text = current.text()
+            self.event_list.takeItem(self.event_list.currentRow())
+            try:
+                date, event = text.split(": ", 1)
+                if date in self.events and event in self.events[date]:
+                    self.events[date].remove(event)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Delete Event", text)
+            except ValueError:
+                QMessageBox.warning(self, "Error", "Etkinlik formatı hatalı!")
+
+    def clear_events(self):
+        self.events.clear()
+        self.event_list.clear()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Events", "All events cleared")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Calendar Action", "User managed calendar")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QTextEdit,
+    QPushButton, QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Notepad(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Notepad - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        new_action = QAction("Yeni", self)
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        sync_action = QAction("Senkronize Et", self)
+        sync_action.triggered.connect(self.sync_file)
+        file_menu.addAction(sync_action)
+
+        layout.setMenuBar(menubar)
+
+        # Metin alanı
+        self.editor = QTextEdit()
+        layout.addWidget(self.editor)
+
+        # Audit ve kaynak butonları
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+        self.current_file = None
+
+    def new_file(self):
+        self.editor.clear()
+        self.current_file = None
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("New File", "Notepad")
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Dosya Aç", "", "Text Files (*.txt)")
+        if fname:
+            try:
+                with open(fname, "r", encoding="utf-8") as f:
+                    self.editor.setText(f.read())
+                self.current_file = fname
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Open File", fname)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Dosya açılamadı: {e}")
+
+    def save_file(self):
+        if not self.current_file:
+            fname, _ = QFileDialog.getSaveFileName(self, "Dosya Kaydet", "", "Text Files (*.txt)")
+            if fname:
+                self.current_file = fname
+        if self.current_file:
+            try:
+                with open(self.current_file, "w", encoding="utf-8") as f:
+                    f.write(self.editor.toPlainText())
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Save File", self.current_file)
+                QMessageBox.information(self, "Kaydet", f"{self.current_file} kaydedildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Kaydedilemedi: {e}")
+
+    def sync_file(self):
+        if self.current_file and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            try:
+                self.kernel.file_sync_manager.sync_file(self.current_file)
+                self.kernel.audit_manager.record("Sync File", self.current_file)
+                QMessageBox.information(self, "Sync", f"{self.current_file} senkronize edildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Senkronizasyon hatası: {e}")
+        else:
+            QMessageBox.information(self, "Sync", "Dosya seçilmedi veya sync desteklenmiyor")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Notepad Action", "User edited notes")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+import os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QFileDialog, QListWidget, QLabel, QMessageBox
+)
+from PyQt6.QtGui import QAction, QPixmap
+from PyQt6.QtCore import Qt
+
+class Gallery(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Gallery - Flourescent OS")
+        self.resize(1000, 700)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Klasör Aç", self)
+        open_action.triggered.connect(self.open_folder)
+        file_menu.addAction(open_action)
+
+        layout.setMenuBar(menubar)
+
+        # Görsel listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        # Görsel alanı
+        self.label = QLabel("Resim seçilmedi")
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setScaledContents(False)
+        layout.addWidget(self.label)
+
+        # Kontroller
+        btn_show = QPushButton("Göster")
+        btn_show.clicked.connect(self.show_image)
+        layout.addWidget(btn_show)
+
+        btn_slideshow = QPushButton("Slayt Gösterisi")
+        btn_slideshow.clicked.connect(self.slideshow)
+        layout.addWidget(btn_slideshow)
+
+        btn_sync = QPushButton("Senkronize Et")
+        btn_sync.clicked.connect(self.sync_image)
+        layout.addWidget(btn_sync)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_folder = None
+        self.images = []
+        self.current_index = 0
+
+    def open_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, "Klasör Aç")
+        if folder:
+            self.current_folder = folder
+            self.list.clear()
+            try:
+                self.images = [f for f in os.listdir(folder) if f.lower().endswith((".png", ".jpg", ".jpeg", ".bmp"))]
+                for img in self.images:
+                    self.list.addItem(img)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Open Gallery Folder", folder)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Klasör açılamadı: {e}")
+
+    def show_image(self):
+        current = self.list.currentItem()
+        if current and self.current_folder:
+            path = os.path.join(self.current_folder, current.text())
+            if os.path.exists(path):
+                pixmap = QPixmap(path)
+                if not pixmap.isNull():
+                    scaled = pixmap.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    self.label.setPixmap(scaled)
+                    if self.kernel and hasattr(self.kernel, "audit_manager"):
+                        self.kernel.audit_manager.record("Show Image", path)
+                else:
+                    QMessageBox.warning(self, "Error", "Resim yüklenemedi!")
+            else:
+                QMessageBox.warning(self, "Error", "Dosya bulunamadı!")
+
+    def slideshow(self):
+        if self.images and self.current_folder:
+            self.current_index = (self.current_index + 1) % len(self.images)
+            path = os.path.join(self.current_folder, self.images[self.current_index])
+            pixmap = QPixmap(path)
+            if not pixmap.isNull():
+                scaled = pixmap.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.label.setPixmap(scaled)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Slideshow Next", path)
+
+    def sync_image(self):
+        current = self.list.currentItem()
+        if current and self.current_folder and self.kernel and hasattr(self.kernel, "file_sync_manager"):
+            path = os.path.join(self.current_folder, current.text())
+            try:
+                self.kernel.file_sync_manager.sync_file(path)
+                self.kernel.audit_manager.record("Sync Image", path)
+                QMessageBox.information(self, "Sync", f"{path} senkronize edildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Senkronizasyon hatası: {e}")
+        else:
+            QMessageBox.information(self, "Sync", "Dosya seçilmedi veya sync desteklenmiyor")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Gallery Action", "User browsed gallery")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QColorDialog, QFileDialog, QMessageBox, QLabel
+)
+from PyQt6.QtGui import QAction, QPainter, QPen, QPixmap
+from PyQt6.QtCore import Qt, QPoint
+
+class PaintApp(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Paint - Flourescent OS")
+        self.resize(800, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_image)
+        file_menu.addAction(save_action)
+
+        layout.setMenuBar(menubar)
+
+        # Çizim alanı
+        self.canvas = QPixmap(800, 600)
+        self.canvas.fill(Qt.GlobalColor.white)
+
+        self.label = QLabel()
+        self.label.setPixmap(self.canvas)
+        self.label.setFixedSize(800, 600)
+        layout.addWidget(self.label)
+
+        # Kontroller
+        btn_color = QPushButton("Renk Seç")
+        btn_color.clicked.connect(self.choose_color)
+        layout.addWidget(btn_color)
+
+        btn_clear = QPushButton("Temizle")
+        btn_clear.clicked.connect(self.clear_canvas)
+        layout.addWidget(btn_clear)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+        # Çizim parametreleri
+        self.drawing = False
+        self.last_point = QPoint()
+        self.pen_color = Qt.GlobalColor.black
+        self.pen_width = 3
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drawing = True
+            self.last_point = event.position().toPoint()
+
+    def mouseMoveEvent(self, event):
+        if (event.buttons() & Qt.MouseButton.LeftButton) and self.drawing:
+            painter = QPainter(self.canvas)
+            pen = QPen(self.pen_color, self.pen_width, Qt.PenStyle.SolidLine)
+            painter.setPen(pen)
+            painter.drawLine(self.last_point, event.position().toPoint())
+            self.last_point = event.position().toPoint()
+            self.label.setPixmap(self.canvas)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drawing = False
+
+    def choose_color(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.pen_color = color
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Choose Color", str(color.name()))
+
+    def clear_canvas(self):
+        self.canvas.fill(Qt.GlobalColor.white)
+        self.label.setPixmap(self.canvas)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Canvas", "Canvas cleared")
+
+    def save_image(self):
+        fname, _ = QFileDialog.getSaveFileName(self, "Resmi Kaydet", "", "PNG Files (*.png)")
+        if fname:
+            try:
+                self.canvas.save(fname)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Save Image", fname)
+                QMessageBox.information(self, "Kaydet", f"{fname} kaydedildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Kaydedilemedi: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Paint Action", "User drew on canvas")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, ast
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit,
+    QPushButton, QLabel, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class Calculator(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Calculator - Flourescent OS")
+        self.resize(400, 300)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("İşlem")
+
+        clear_action = QAction("Temizle", self)
+        clear_action.triggered.connect(self.clear_input)
+        file_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Giriş alanı
+        self.input = QLineEdit()
+        self.input.setPlaceholderText("İşlem gir (örn: 5+3*2)")
+        layout.addWidget(self.input)
+
+        # Sonuç etiketi
+        self.result_label = QLabel("Sonuç: ")
+        layout.addWidget(self.result_label)
+
+        # Kontroller
+        btn_calc = QPushButton("Hesapla")
+        btn_calc.clicked.connect(self.calculate)
+        layout.addWidget(btn_calc)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        btn_res = QPushButton("Kaynak Kullanımını Göster")
+        btn_res.clicked.connect(self.show_resources)
+        layout.addWidget(btn_res)
+
+        self.setLayout(layout)
+
+    def safe_eval(self, expr):
+        """Basit matematiksel ifadeleri güvenli şekilde değerlendirir."""
+        try:
+            node = ast.parse(expr, mode='eval')
+            allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp,
+                             ast.Num, ast.Add, ast.Sub, ast.Mult,
+                             ast.Div, ast.Pow, ast.Mod, ast.USub, ast.Load)
+            for n in ast.walk(node):
+                if not isinstance(n, allowed_nodes):
+                    raise ValueError("İzin verilmeyen ifade")
+            return eval(compile(node, "<string>", "eval"))
+        except Exception as e:
+            raise ValueError(f"Hatalı ifade: {e}")
+
+    def calculate(self):
+        expr = self.input.text()
+        try:
+            result = self.safe_eval(expr)
+            self.result_label.setText(f"Sonuç: {result}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Calculate", expr)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Hesaplama hatası: {e}")
+
+    def clear_input(self):
+        self.input.clear()
+        self.result_label.setText("Sonuç: ")
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Input", "Calculator")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Calculator Action", "User calculated expression")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+    def show_resources(self):
+        if self.kernel and hasattr(self.kernel, "resource_monitor"):
+            status = self.kernel.resource_monitor.get_status()
+            QMessageBox.information(self, "Resources", str(status))
+        else:
+            QMessageBox.information(self, "Resources", "Resource monitor yok")
+
+import os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtMultimediaWidgets import QVideoWidget
+from PyQt6.QtCore import QUrl
+
+class VideoPlayer(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Video Player - Flourescent OS")
+        self.resize(900, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Video Aç", self)
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        layout.setMenuBar(menubar)
+
+        # Video alanı
+        self.video_widget = QVideoWidget()
+        layout.addWidget(self.video_widget)
+
+        # Kontroller
+        btn_play = QPushButton("▶ Oynat")
+        btn_play.clicked.connect(self.play_video)
+        layout.addWidget(btn_play)
+
+        btn_pause = QPushButton("⏸ Duraklat")
+        btn_pause.clicked.connect(self.pause_video)
+        layout.addWidget(btn_pause)
+
+        btn_stop = QPushButton("⏹ Durdur")
+        btn_stop.clicked.connect(self.stop_video)
+        layout.addWidget(btn_stop)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+        # Media player
+        self.player = QMediaPlayer()
+        self.audio_output = QAudioOutput()
+        self.player.setAudioOutput(self.audio_output)
+        self.player.setVideoOutput(self.video_widget)
+
+        self.current_file = None
+
+    def open_file(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Video Aç", "", "Video Files (*.mp4 *.avi *.mkv)")
+        if fname:
+            try:
+                self.current_file = fname
+                self.player.setSource(QUrl.fromLocalFile(fname))
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Open Video", fname)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Video açılamadı: {e}")
+
+    def play_video(self):
+        if self.current_file:
+            try:
+                self.player.play()
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Play Video", self.current_file)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Oynatma hatası: {e}")
+
+    def pause_video(self):
+        try:
+            self.player.pause()
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Pause Video", "Paused")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Duraklatma hatası: {e}")
+
+    def stop_video(self):
+        try:
+            self.player.stop()
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Stop Video", "Stopped")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Durdurma hatası: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("VideoPlayer Action", "User interacted with video player")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit,
+    QPushButton, QListWidget, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class ChatClient(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Chat Client - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Sohbet")
+
+        clear_action = QAction("Geçmişi Temizle", self)
+        clear_action.triggered.connect(self.clear_chat)
+        file_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Sohbet listesi
+        self.chat_list = QListWidget()
+        layout.addWidget(self.chat_list)
+
+        # Mesaj giriş alanı
+        self.msg_input = QLineEdit()
+        self.msg_input.setPlaceholderText("Mesaj yaz...")
+        layout.addWidget(self.msg_input)
+
+        # Kontroller
+        btn_send = QPushButton("Gönder")
+        btn_send.clicked.connect(self.send_message)
+        layout.addWidget(btn_send)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.chat_history = []
+
+    def send_message(self):
+        msg = self.msg_input.text().strip()
+        if msg:
+            self.chat_list.addItem(f"Sen: {msg}")
+            self.chat_history.append(("Sen", msg))
+            self.msg_input.clear()
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Send Message", msg)
+
+    def clear_chat(self):
+        self.chat_list.clear()
+        self.chat_history.clear()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Chat", "Chat history cleared")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("ChatClient Action", "User interacted with chat client")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class GameHub(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Game Hub - Flourescent OS")
+        self.resize(700, 500)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Oyun")
+
+        refresh_action = QAction("Oyunları Yenile", self)
+        refresh_action.triggered.connect(self.refresh_games)
+        file_menu.addAction(refresh_action)
+
+        layout.setMenuBar(menubar)
+
+        # Oyun listesi
+        self.list = QListWidget()
+        layout.addWidget(self.list)
+
+        # Kontroller
+        btn_start = QPushButton("Başlat")
+        btn_start.clicked.connect(self.start_game)
+        layout.addWidget(btn_start)
+
+        btn_stop = QPushButton("Durdur")
+        btn_stop.clicked.connect(self.stop_game)
+        layout.addWidget(btn_stop)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.games = ["Snake", "Tetris", "Minesweeper", "Pong"]
+        self.refresh_games()
+
+    def refresh_games(self):
+        self.list.clear()
+        for g in self.games:
+            self.list.addItem(g)
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Refresh Games", "Game list refreshed")
+
+    def start_game(self):
+        current = self.list.currentItem()
+        if current:
+            game = current.text()
+            QMessageBox.information(self, "Game", f"{game} başlatıldı!")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Start Game", game)
+
+    def stop_game(self):
+        current = self.list.currentItem()
+        if current:
+            game = current.text()
+            QMessageBox.information(self, "Game", f"{game} durduruldu!")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Stop Game", game)
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("GameHub Action", "User interacted with game hub")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os, json
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QListWidget,
+    QPushButton, QLineEdit, QMessageBox, QFileDialog
+)
+from PyQt6.QtGui import QAction
+
+class MusicStudio(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Music Studio - Flourescent OS")
+        self.resize(800, 500)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Müzik")
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_track)
+        file_menu.addAction(save_action)
+
+        layout.setMenuBar(menubar)
+
+        # Nota listesi
+        self.notes_list = QListWidget()
+        layout.addWidget(self.notes_list)
+
+        # Nota giriş alanı
+        self.note_input = QLineEdit()
+        self.note_input.setPlaceholderText("Nota gir (örn: C, D#, F)")
+        layout.addWidget(self.note_input)
+
+        # Kontroller
+        btn_add = QPushButton("Nota Ekle")
+        btn_add.clicked.connect(self.add_note)
+        layout.addWidget(btn_add)
+
+        btn_play = QPushButton("Çal")
+        btn_play.clicked.connect(self.play_track)
+        layout.addWidget(btn_play)
+
+        btn_stop = QPushButton("Durdur")
+        btn_stop.clicked.connect(self.stop_track)
+        layout.addWidget(btn_stop)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.track = []
+
+    def add_note(self):
+        note = self.note_input.text().strip()
+        if note:
+            self.notes_list.addItem(note)
+            self.track.append(note)
+            self.note_input.clear()
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Add Note", note)
+
+    def play_track(self):
+        if self.track:
+            QMessageBox.information(self, "Play", f"Parça çalınıyor: {' '.join(self.track)}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Play Track", str(self.track))
+
+    def stop_track(self):
+        QMessageBox.information(self, "Stop", "Parça durduruldu")
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Stop Track", "Stopped")
+
+    def save_track(self):
+        fname, _ = QFileDialog.getSaveFileName(self, "Parçayı Kaydet", "", "Text Files (*.txt)")
+        if fname:
+            try:
+                with open(fname, "w", encoding="utf-8") as f:
+                    f.write(" ".join(self.track))
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Save Track", fname)
+                QMessageBox.information(self, "Kaydet", f"Parça {fname} olarak kaydedildi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Kaydedilemedi: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("MusicStudio Action", "User composed music")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import os
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QFileDialog, QLabel, QMessageBox
+)
+from PyQt6.QtGui import QAction, QPixmap, QImage, QTransform
+from PyQt6.QtCore import Qt
+
+class PhotoEditor(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Photo Editor - Flourescent OS")
+        self.resize(900, 600)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Dosya")
+
+        open_action = QAction("Resim Aç", self)
+        open_action.triggered.connect(self.open_image)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Kaydet", self)
+        save_action.triggered.connect(self.save_image)
+        file_menu.addAction(save_action)
+
+        layout.setMenuBar(menubar)
+
+        # Görsel alanı
+        self.label = QLabel("Resim yüklenmedi")
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setScaledContents(True)
+        layout.addWidget(self.label)
+
+        # Kontroller
+        btn_rotate = QPushButton("Döndür")
+        btn_rotate.clicked.connect(self.rotate_image)
+        layout.addWidget(btn_rotate)
+
+        btn_crop = QPushButton("Kırp")
+        btn_crop.clicked.connect(self.crop_image)
+        layout.addWidget(btn_crop)
+
+        btn_filter = QPushButton("Filtre Uygula (Grayscale)")
+        btn_filter.clicked.connect(self.apply_filter)
+        layout.addWidget(btn_filter)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.current_file = None
+        self.image = None
+
+    def open_image(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Resim Aç", "", "Images (*.png *.jpg *.jpeg *.bmp)")
+        if fname:
+            try:
+                self.image = QPixmap(fname)
+                if not self.image.isNull():
+                    self.label.setPixmap(self.image)
+                    self.current_file = fname
+                    if self.kernel and hasattr(self.kernel, "audit_manager"):
+                        self.kernel.audit_manager.record("Open Image", fname)
+                else:
+                    QMessageBox.warning(self, "Error", "Resim yüklenemedi!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Resim açılamadı: {e}")
+
+    def save_image(self):
+        if self.image:
+            fname, _ = QFileDialog.getSaveFileName(self, "Resmi Kaydet", "", "PNG Files (*.png)")
+            if fname:
+                try:
+                    self.image.save(fname)
+                    if self.kernel and hasattr(self.kernel, "audit_manager"):
+                        self.kernel.audit_manager.record("Save Image", fname)
+                    QMessageBox.information(self, "Kaydet", f"{fname} kaydedildi!")
+                except Exception as e:
+                    QMessageBox.warning(self, "Error", f"Kaydedilemedi: {e}")
+
+    def rotate_image(self):
+        if self.image:
+            try:
+                transform = QTransform().rotate(90)
+                rotated = self.image.transformed(transform, Qt.TransformationMode.SmoothTransformation)
+                self.image = rotated
+                self.label.setPixmap(self.image)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Rotate Image", "90 degrees")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Döndürme hatası: {e}")
+
+    def crop_image(self):
+        if self.image:
+            try:
+                rect = self.image.rect().adjusted(50, 50, -50, -50)
+                cropped = self.image.copy(rect)
+                self.image = cropped
+                self.label.setPixmap(self.image)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Crop Image", "Cropped 50px margins")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Kırpma hatası: {e}")
+
+    def apply_filter(self):
+        if self.image:
+            try:
+                img = self.image.toImage().convertToFormat(QImage.Format.Format_Grayscale8)
+                self.image = QPixmap.fromImage(img)
+                self.label.setPixmap(self.image)
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Apply Filter", "Grayscale")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Filtre uygulanamadı: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("PhotoEditor Action", "User edited photo")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import subprocess
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLineEdit,
+    QTextEdit, QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class TerminalEmulator(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Terminal Emulator - Flourescent OS")
+        self.resize(800, 500)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("Terminal")
+
+        clear_action = QAction("Temizle", self)
+        clear_action.triggered.connect(self.clear_output)
+        file_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Çıktı alanı
+        self.output = QTextEdit()
+        self.output.setReadOnly(True)
+        layout.addWidget(self.output)
+
+        # Komut giriş alanı
+        self.cmd_input = QLineEdit()
+        self.cmd_input.setPlaceholderText("Komut gir (örn: dir / ls)")
+        layout.addWidget(self.cmd_input)
+
+        # Kontroller
+        btn_run = QPushButton("Çalıştır")
+        btn_run.clicked.connect(self.run_command)
+        layout.addWidget(btn_run)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+    def run_command(self):
+        cmd = self.cmd_input.text().strip()
+        if not cmd:
+            QMessageBox.warning(self, "Komut", "Lütfen bir komut girin!")
+            return
+        try:
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            self.output.append(f"$ {cmd}\n{result.stdout}{result.stderr}")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Run Command", cmd)
+        except Exception as e:
+            self.output.append(f"Hata: {e}")
+
+    def clear_output(self):
+        self.output.clear()
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("Clear Output", "Terminal cleared")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("TerminalEmulator Action", "User executed terminal command")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+
+import psutil
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLabel,
+    QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+from PyQt6.QtCore import QTimer
+
+class SystemMonitor(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("System Monitor - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        file_menu = menubar.addMenu("İzleme")
+
+        refresh_action = QAction("Yenile", self)
+        refresh_action.triggered.connect(self.update_status)
+        file_menu.addAction(refresh_action)
+
+        layout.setMenuBar(menubar)
+
+        # Etiketler
+        self.cpu_label = QLabel("CPU: %")
+        layout.addWidget(self.cpu_label)
+
+        self.ram_label = QLabel("RAM: %")
+        layout.addWidget(self.ram_label)
+
+        self.disk_label = QLabel("Disk: %")
+        layout.addWidget(self.disk_label)
+
+        # Kontroller
+        btn_refresh = QPushButton("Durumu Yenile")
+        btn_refresh.clicked.connect(self.update_status)
+        layout.addWidget(btn_refresh)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+
+        # Periyodik güncelleme için timer
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_status)
+        self.timer.start(2000)  # 2 saniyede bir güncelle
+
+        self.update_status()
+
+    def update_status(self):
+        try:
+            cpu = psutil.cpu_percent()
+            ram = psutil.virtual_memory().percent
+            disk = psutil.disk_usage('/').percent
+
+            self.cpu_label.setText(f"CPU: {cpu}%")
+            self.ram_label.setText(f"RAM: {ram}%")
+            self.disk_label.setText(f"Disk: {disk}%")
+
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Update Status", f"CPU {cpu}%, RAM {ram}%, Disk {disk}%")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Durum alınamadı: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("SystemMonitor Action", "User checked system resources")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+import os, requests
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QLabel, QListWidget,
+    QPushButton, QMessageBox, QProgressBar, QTextEdit
+)
+
+REPO_URL = "https://api.github.com/repos/aydintepeemlak3867-cloud/FlourescentOS-3Store/contents"
+DOWNLOAD_DIR = "DownloadedAppsStuff"
+
+class FlourescentMarket(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("FlourescentOS Advanced Store")
+        self.resize(700, 600)
+
+        layout = QVBoxLayout()
+        self.status = QLabel("🔄 Connecting to Store...")
+        layout.addWidget(self.status)
+
+        self.app_list = QListWidget()
+        self.app_list.itemClicked.connect(self.show_details)
+        layout.addWidget(self.app_list)
+
+        self.install_btn = QPushButton("⬇️ Install Selected App")
+        self.install_btn.clicked.connect(self.install_app)
+        layout.addWidget(self.install_btn)
+
+        self.details_label = QLabel("ℹ️ App details will appear here")
+        layout.addWidget(self.details_label)
+
+        self.progress = QProgressBar()
+        layout.addWidget(self.progress)
+
+        # Yorum alanı
+        self.review_input = QTextEdit()
+        self.review_input.setPlaceholderText("Yorum yaz...")
+        layout.addWidget(self.review_input)
+
+        self.submit_review_btn = QPushButton("💬 Submit Review")
+        self.submit_review_btn.clicked.connect(self.submit_review)
+        layout.addWidget(self.submit_review_btn)
+
+        self.reviews_label = QLabel("📑 Reviews will appear here")
+        layout.addWidget(self.reviews_label)
+
+        self.setLayout(layout)
+        self.pyapps = {}
+        self.reviews = {}
+        self.load_apps()
+
+    def load_apps(self):
+        try:
+            response = requests.get(REPO_URL, timeout=5)
+            if response.status_code == 200:
+                files = response.json()
+                pyapps = [f for f in files if f['name'].endswith('.PyApp')]
+                if pyapps:
+                    self.status.setText("✅ Store Online")
+                    for app in pyapps:
+                        self.app_list.addItem(app['name'])
+                        self.pyapps[app['name']] = app
+                        self.reviews[app['name']] = []
+                else:
+                    self.status.setText("❌ No Apps Found")
+            else:
+                self.status.setText("⚠️ Store Error")
+        except requests.exceptions.RequestException:
+            self.status.setText("⚠️ Offline or No Data")
+
+    def show_details(self, item):
+        app_name = item.text()
+        app_info = self.pyapps[app_name]
+        details = f"📦 {app_name}\nSize: {app_info.get('size', 'Unknown')} bytes\nPath: {app_info['path']}"
+        self.details_label.setText(details)
+        if self.reviews[app_name]:
+            self.reviews_label.setText("📑 Reviews:\n" + "\n".join(self.reviews[app_name]))
+        else:
+            self.reviews_label.setText("📑 No reviews yet")
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("View App Details", app_name)
+
+    def install_app(self):
+        selected = self.app_list.currentItem()
+        if selected:
+            app_name = selected.text()
+            app_info = self.pyapps[app_name]
+            url = app_info['download_url']
+            os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+            path = os.path.join(DOWNLOAD_DIR, app_name)
+            try:
+                response = requests.get(url, timeout=10, stream=True)
+                total = int(response.headers.get('content-length', 0))
+                self.progress.setValue(0)
+                with open(path, 'wb') as f:
+                    downloaded = 0
+                    for chunk in response.iter_content(1024):
+                        if chunk:
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            if total > 0:
+                                self.progress.setValue(int(downloaded * 100 / total))
+                QMessageBox.information(self, "Install", f"{app_name} installed successfully!")
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Install App", app_name)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to install {app_name}: {e}")
+
+    def submit_review(self):
+        selected = self.app_list.currentItem()
+        if selected:
+            app_name = selected.text()
+            review = self.review_input.toPlainText().strip()
+            if review:
+                self.reviews[app_name].append(review)
+                self.review_input.clear()
+                self.reviews_label.setText("📑 Reviews:\n" + "\n".join(self.reviews[app_name]))
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Submit Review", f"{app_name}: {review}")
+
+import os, shutil
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QPushButton,
+    QFileDialog, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+BACKUP_DIR = "SystemBackups"
+
+class BackupRestore(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Backup & Restore - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        backup_menu = menubar.addMenu("Yedekleme")
+
+        clear_action = QAction("Yedekleri Temizle", self)
+        clear_action.triggered.connect(self.clear_backups)
+        backup_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Kontroller
+        btn_backup = QPushButton("📦 Yedek Al")
+        btn_backup.clicked.connect(self.create_backup)
+        layout.addWidget(btn_backup)
+
+        btn_restore = QPushButton("♻️ Yedekten Geri Yükle")
+        btn_restore.clicked.connect(self.restore_backup)
+        layout.addWidget(btn_restore)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        os.makedirs(BACKUP_DIR, exist_ok=True)
+
+    def create_backup(self):
+        fname, _ = QFileDialog.getSaveFileName(self, "Yedek Kaydet", BACKUP_DIR, "Backup Files (*.bak)")
+        if fname:
+            src = "system_config.json"
+            if os.path.exists(src):
+                try:
+                    shutil.copy(src, fname)
+                    QMessageBox.information(self, "Backup", f"Yedek {fname} olarak kaydedildi!")
+                    if self.kernel and hasattr(self.kernel, "audit_manager"):
+                        self.kernel.audit_manager.record("Create Backup", fname)
+                except Exception as e:
+                    QMessageBox.warning(self, "Error", f"Yedekleme hatası: {e}")
+            else:
+                QMessageBox.warning(self, "Error", "Kaynak dosya bulunamadı!")
+
+    def restore_backup(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Yedek Seç", BACKUP_DIR, "Backup Files (*.bak)")
+        if fname:
+            dest = "system_config.json"
+            try:
+                shutil.copy(fname, dest)
+                QMessageBox.information(self, "Restore", f"{fname} geri yüklendi!")
+                if self.kernel and hasattr(self.kernel, "audit_manager"):
+                    self.kernel.audit_manager.record("Restore Backup", fname)
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Geri yükleme hatası: {e}")
+
+    def clear_backups(self):
+        try:
+            for f in os.listdir(BACKUP_DIR):
+                path = os.path.join(BACKUP_DIR, f)
+                if os.path.isfile(path):
+                    os.remove(path)
+            QMessageBox.information(self, "Clear", "Tüm yedekler silindi!")
+            if self.kernel and hasattr(self.kernel, "audit_manager"):
+                self.kernel.audit_manager.record("Clear Backups", "All backups removed")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Yedekler silinemedi: {e}")
+
+    def audit_log(self):
+        if self.kernel and hasattr(self.kernel, "audit_manager"):
+            self.kernel.audit_manager.record("BackupRestore Action", "User managed backups")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+
+
+import os, requests
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLabel,
+    QPushButton, QProgressBar, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+UPDATE_URL = "https://api.github.com/repos/aydintepeemlak3867-cloud/FlourescentOS-3-updating-services/contents"
+DOWNLOAD_DIR = "SystemUpdates"
+
+class UpdateManager(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Update Manager - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        update_menu = menubar.addMenu("Güncelleme")
+
+        check_action = QAction("Güncellemeleri Kontrol Et", self)
+        check_action.triggered.connect(self.check_updates)
+        update_menu.addAction(check_action)
+
+        layout.setMenuBar(menubar)
+
+        # Durum etiketi
+        self.status = QLabel("🔄 Henüz kontrol edilmedi")
+        layout.addWidget(self.status)
+
+        # İndirme ilerlemesi
+        self.progress = QProgressBar()
+        layout.addWidget(self.progress)
+
+        # Kontroller
+        btn_check = QPushButton("🔍 Güncellemeleri Kontrol Et")
+        btn_check.clicked.connect(self.check_updates)
+        layout.addWidget(btn_check)
+
+        btn_download = QPushButton("⬇️ Güncellemeyi İndir")
+        btn_download.clicked.connect(self.download_update)
+        layout.addWidget(btn_download)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+        self.latest_update = None
+
+    def check_updates(self):
+        try:
+            response = requests.get(UPDATE_URL, timeout=5)
+            if response.status_code == 200:
+                files = response.json()
+                updates = [f for f in files if f['name'].endswith('.upd')]
+                if updates:
+                    self.latest_update = updates[0]
+                    self.status.setText(f"✅ Güncelleme bulundu: {self.latest_update['name']}")
+                    if self.kernel:
+                        self.kernel.audit_manager.record("Check Updates", self.latest_update['name'])
+                else:
+                    self.status.setText("❌ Güncelleme yok")
+            else:
+                self.status.setText("⚠️ Sunucu hatası")
+        except requests.exceptions.RequestException:
+            self.status.setText("⚠️ Bağlantı yok")
+
+    def download_update(self):
+        if self.latest_update:
+            url = self.latest_update['download_url']
+            path = os.path.join(DOWNLOAD_DIR, self.latest_update['name'])
+            try:
+                response = requests.get(url, timeout=10, stream=True)
+                total = int(response.headers.get('content-length', 0))
+                self.progress.setValue(0)
+                with open(path, 'wb') as f:
+                    downloaded = 0
+                    for chunk in response.iter_content(1024):
+                        if chunk:
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            if total > 0:
+                                self.progress.setValue(int(downloaded * 100 / total))
+                QMessageBox.information(self, "Update", f"{self.latest_update['name']} indirildi!")
+                if self.kernel:
+                    self.kernel.audit_manager.record("Download Update", self.latest_update['name'])
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Güncelleme indirilemedi: {e}")
+
+    def audit_log(self):
+        if self.kernel:
+            self.kernel.audit_manager.record("UpdateManager Action", "User checked/installed updates")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLabel,
+    QListWidget, QPushButton, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class NotificationCenter(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("Notification Center - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        notif_menu = menubar.addMenu("Bildirimler")
+
+        clear_action = QAction("Tümünü Temizle", self)
+        clear_action.triggered.connect(self.clear_notifications)
+        notif_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Bildirim listesi
+        self.notif_list = QListWidget()
+        layout.addWidget(self.notif_list)
+
+        # Kontroller
+        btn_add = QPushButton("➕ Test Bildirim Ekle")
+        btn_add.clicked.connect(self.add_test_notification)
+        layout.addWidget(btn_add)
+
+        btn_clear = QPushButton("🗑️ Bildirimleri Temizle")
+        btn_clear.clicked.connect(self.clear_notifications)
+        layout.addWidget(btn_clear)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.notifications = []
+
+    def add_notification(self, message):
+        self.notifications.append(message)
+        self.notif_list.addItem(message)
+        if self.kernel:
+            self.kernel.audit_manager.record("Add Notification", message)
+
+    def add_test_notification(self):
+        self.add_notification("🔔 Test bildirimi eklendi")
+
+    def clear_notifications(self):
+        self.notifications.clear()
+        self.notif_list.clear()
+        if self.kernel:
+            self.kernel.audit_manager.record("Clear Notifications", "All cleared")
+        QMessageBox.information(self, "Clear", "Tüm bildirimler temizlendi!")
+
+    def audit_log(self):
+        if self.kernel:
+            self.kernel.audit_manager.record("NotificationCenter Action", "User managed notifications")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QMenuBar, QLabel,
+    QListWidget, QPushButton, QLineEdit, QMessageBox
+)
+from PyQt6.QtGui import QAction
+
+class UserManager(QWidget):
+    def __init__(self, kernel=None):
+        super().__init__()
+        self.kernel = kernel
+        self.setWindowTitle("User Manager - Flourescent OS")
+        self.resize(600, 400)
+        layout = QVBoxLayout()
+
+        # Menü
+        menubar = QMenuBar()
+        user_menu = menubar.addMenu("Kullanıcılar")
+
+        clear_action = QAction("Tümünü Temizle", self)
+        clear_action.triggered.connect(self.clear_users)
+        user_menu.addAction(clear_action)
+
+        layout.setMenuBar(menubar)
+
+        # Kullanıcı listesi
+        self.user_list = QListWidget()
+        layout.addWidget(self.user_list)
+
+        # Kullanıcı giriş alanı
+        self.user_input = QLineEdit()
+        self.user_input.setPlaceholderText("Yeni kullanıcı adı gir...")
+        layout.addWidget(self.user_input)
+
+        # Kontroller
+        btn_add = QPushButton("➕ Kullanıcı Ekle")
+        btn_add.clicked.connect(self.add_user)
+        layout.addWidget(btn_add)
+
+        btn_remove = QPushButton("🗑️ Kullanıcı Sil")
+        btn_remove.clicked.connect(self.remove_user)
+        layout.addWidget(btn_remove)
+
+        btn_audit = QPushButton("Audit Log Kaydet")
+        btn_audit.clicked.connect(self.audit_log)
+        layout.addWidget(btn_audit)
+
+        self.setLayout(layout)
+        self.users = ["admin", "guest"]
+
+        self.refresh_users()
+
+    def refresh_users(self):
+        self.user_list.clear()
+        for u in self.users:
+            self.user_list.addItem(u)
+
+    def add_user(self):
+        uname = self.user_input.text().strip()
+        if uname:
+            self.users.append(uname)
+            self.user_list.addItem(uname)
+            self.user_input.clear()
+            if self.kernel:
+                self.kernel.audit_manager.record("Add User", uname)
+            QMessageBox.information(self, "Add", f"{uname} eklendi!")
+
+    def remove_user(self):
+        current = self.user_list.currentItem()
+        if current:
+            uname = current.text()
+            self.users.remove(uname)
+            self.user_list.takeItem(self.user_list.currentRow())
+            if self.kernel:
+                self.kernel.audit_manager.record("Remove User", uname)
+            QMessageBox.information(self, "Remove", f"{uname} silindi!")
+
+    def clear_users(self):
+        self.users.clear()
+        self.user_list.clear()
+        if self.kernel:
+            self.kernel.audit_manager.record("Clear Users", "All users removed")
+        QMessageBox.information(self, "Clear", "Tüm kullanıcılar silindi!")
+
+    def audit_log(self):
+        if self.kernel:
+            self.kernel.audit_manager.record("UserManager Action", "User managed accounts")
+        QMessageBox.information(self, "Audit", "Audit kaydı oluşturuldu!")
+
+import sys, os, json, datetime, psutil, subprocess
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+    QLabel, QStackedWidget, QMessageBox, QInputDialog, QLineEdit,
+    QProgressBar, QFrame, QMainWindow, QListWidget, QMenu, QFileDialog
+)
+from PyQt6.QtCore import Qt, QTimer, QUrl
+from PyQt6.QtGui import QAction, QDesktopServices
+
+# --- EKSİK UYGULAMALAR İÇİN TASLAK (STUB) SINIFLAR ---
+#yok aq ne bakıyon la 
+
+DOWNLOAD_DIR = "DownloadedAppsStuff"
+
+GLOBAL_STYLESHEET = """
+QMainWindow, QWidget#MainBG {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #0B1320, stop:0.5 #0D1726, stop:1 #080E18);
+    color: #E1E6ED;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+QLabel#BootLogo { color: #00D2FF; font-size: 48px; font-weight: bold; }
+QLabel#BootSubText { color: #8A99AD; font-size: 14px; font-weight: bold; letter-spacing: 2px; }
+QLabel#BootStatus { color: #728197; font-size: 12px; }
+QProgressBar#BootProgress { border: none; background-color: #121B2A; border-radius: 4px; height: 6px; }
+QProgressBar#BootProgress::chunk { background-color: #00D2FF; border-radius: 4px; }
+
+QFrame#LockCard { background-color: rgba(17, 24, 39, 0.85); border: 1px solid #1C273A; border-radius: 16px; }
+QLabel#LockClock { color: #00D2FF; font-size: 36px; font-weight: bold; }
+QFrame#UserBadge { background-color: #1A2436; border-radius: 8px; }
+QLabel#UserName { color: #FFFFFF; font-size: 14px; font-weight: 600; }
+QLineEdit#PassInput { background-color: #0B111D; border: 1px solid #1E2B40; border-radius: 8px; padding: 8px 12px; color: #FFFFFF; }
+QPushButton#LoginBtn { background-color: #0084FF; color: white; border: none; border-radius: 8px; font-weight: bold; padding: 8px; }
+QPushButton#LoginBtn:hover { background-color: #0073E6; }
+QPushButton#SwitchUserBtn { background-color: #1E2A3E; color: #A0AAB8; border: none; border-radius: 8px; font-weight: 600; padding: 8px; }
+
+QFrame#MacMenuBar { background-color: rgba(15, 22, 35, 0.80); border-bottom: 1px solid rgba(255, 255, 255, 0.08); min-height: 26px; max-height: 26px; }
+QPushButton.MacLogoBtn { color: #00D2FF; font-weight: bold; font-size: 14px; background: transparent; border: none; padding: 0 8px; }
+QPushButton.MacLogoBtn:hover { background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+QLabel.MacAppName { color: #FFFFFF; font-weight: bold; font-size: 12px; padding: 0 6px; }
+QPushButton.MacMenuItem { color: #D1D5DB; background: transparent; border: none; font-size: 12px; padding: 2px 6px; }
+QPushButton.MacMenuItem:hover { color: #FFFFFF; background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+QPushButton::menu-indicator { image: none; width: 0px; }
+QLabel.MacStatusText { color: #D1D5DB; font-size: 12px; padding: 0 4px; }
+
+QMenu { background-color: rgba(22, 32, 50, 0.95); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; padding: 4px; color: #E1E6ED; }
+QMenu::item { padding: 5px 24px 5px 12px; border-radius: 4px; font-size: 12px; }
+QMenu::item:selected { background-color: #0084FF; color: #FFFFFF; }
+QMenu::separator { height: 1px; background-color: rgba(255, 255, 255, 0.12); margin: 4px 6px; }
+
+QFrame#BigSurDock { background-color: rgba(15, 22, 35, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 4px 8px; }
+QPushButton.DockBtn { background-color: #182234; border: none; border-radius: 10px; min-width: 32px; max-width: 32px; min-height: 32px; max-height: 32px; font-size: 15px; }
+QPushButton.DockBtn:hover { background-color: #00D2FF; }
+"""
+
+class AppManager:
+    def __init__(self):
+        self.opened_apps = {}
+
+    def open_app(self, name, widget_class, workspace):
+        if name in self.opened_apps:
+            workspace.setCurrentWidget(self.opened_apps[name])
+        else:
+            app_instance = widget_class()
+            workspace.addWidget(app_instance)
+            self.opened_apps[name] = app_instance
+            workspace.setCurrentWidget(app_instance)
+
+    def close_app(self, name, workspace):
+        if name in self.opened_apps:
+            widget = self.opened_apps.pop(name)
+            workspace.removeWidget(widget)
+            widget.deleteLater()
+
+    def switch_app(self, name, workspace):
+        if name in self.opened_apps:
+            workspace.setCurrentWidget(self.opened_apps[name])
+
+    def list_apps(self):
+        return list(self.opened_apps.keys())
+
+
+class AppRunner(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("AppRunner")
+        self.resize(500, 400)
+
+        layout = QVBoxLayout()
+        self.status = QLabel("🔄 Scanning DownloadedAppsStuff...")
+        layout.addWidget(self.status)
+
+        self.app_list = QListWidget()
+        layout.addWidget(self.app_list)
+
+        self.run_btn = QPushButton("▶️ Run Selected App")
+        self.run_btn.clicked.connect(self.run_app)
+        layout.addWidget(self.run_btn)
+
+        self.remove_btn = QPushButton("🗑️ Remove Selected App")
+        self.remove_btn.clicked.connect(self.remove_app)
+        layout.addWidget(self.remove_btn)
+
+        self.refresh_btn = QPushButton("🔄 Refresh List")
+        self.refresh_btn.clicked.connect(self.load_local_apps)
+        layout.addWidget(self.refresh_btn)
+
+        self.setLayout(layout)
+        self.load_local_apps()
+
+    def load_local_apps(self):
+        self.app_list.clear()
+        if os.path.exists(DOWNLOAD_DIR):
+            files = os.listdir(DOWNLOAD_DIR)
+            pyapps = [f for f in files if f.endswith(".PyApp")]
+            if pyapps:
+                self.status.setText("✅ Apps Found")
+                for app in pyapps:
+                    self.app_list.addItem(app)
+            else:
+                self.status.setText("❌ No Apps Found")
+        else:
+            self.status.setText("⚠️ 404 DownloadedAppsStuff Missing")
+
+    def run_app(self):
+        selected = self.app_list.currentItem()
+        if selected:
+            app_name = selected.text()
+            path = os.path.join(DOWNLOAD_DIR, app_name)
+            try:
+                subprocess.Popen(["python", path])
+                QMessageBox.information(self, "Run", f"{app_name} is running!")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to run {app_name}: {e}")
+
+    def remove_app(self):
+        selected = self.app_list.currentItem()
+        if selected:
+            app_name = selected.text()
+            path = os.path.join(DOWNLOAD_DIR, app_name)
+            try:
+                os.remove(path)
+                QMessageBox.information(self, "Remove", f"{app_name} removed successfully!")
+                self.load_local_apps()
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to remove {app_name}: {e}")
+
+
+class BootScreen(QWidget):
+    def __init__(self, on_finish):
+        super().__init__()
+        self.on_finish = on_finish
+        self.val = 0
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        logo = QLabel("[/]")
+        logo.setObjectName("BootLogo")
+        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        sub_text = QLabel("SPM")
+        sub_text.setObjectName("BootSubText")
+        sub_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.status_lbl = QLabel("ANOE başlatılıyor...")
+        self.status_lbl.setObjectName("BootStatus")
+        self.status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.progress = QProgressBar()
+        self.progress.setObjectName("BootProgress")
+        self.progress.setFixedWidth(280)
+        self.progress.setTextVisible(False)
+
+        layout.addWidget(logo)
+        layout.addWidget(sub_text)
+        layout.addSpacing(40)
+        layout.addWidget(self.status_lbl)
+        layout.addSpacing(8)
+        layout.addWidget(self.progress, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.setLayout(layout)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.step)
+        self.timer.start(25)
+
+    def step(self):
+        self.val += 1
+        self.progress.setValue(self.val)
+
+        if self.val <= 25:
+            self.status_lbl.setText("ANOE başlatılıyor...")
+        elif 26 <= self.val <= 49:
+            self.status_lbl.setText("Grafik motoru başlatılıyor...")
+        elif 50 <= self.val <= 74:
+            self.status_lbl.setText("Uygulamalar hazırlanıyor...")
+        elif 75 <= self.val <= 99:
+            self.status_lbl.setText("Son rötüşlar yapılıyor...")
+        elif self.val >= 100:
+            self.status_lbl.setText("Hazır")
+            self.timer.stop()
+            QTimer.singleShot(400, self.on_finish)
+
+
+class LockScreen(QWidget):
+    def __init__(self, on_login_success):
+        super().__init__()
+        self.on_login_success = on_login_success
+        self.current_user = "Kuzey (Admin)"
+        self.target_password = " "
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        card = QFrame()
+        card.setObjectName("LockCard")
+        card.setFixedSize(310, 270)
+
+        card_layout = QVBoxLayout()
+        card_layout.setContentsMargins(20, 20, 20, 20)
+        card_layout.setSpacing(12)
+
+        self.clock = QLabel("20:32")
+        self.clock.setObjectName("LockClock")
+        self.clock.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        user_badge = QFrame()
+        user_badge.setObjectName("UserBadge")
+        badge_layout = QHBoxLayout()
+        badge_layout.setContentsMargins(8, 6, 8, 6)
+        
+        self.user_lbl = QLabel(self.current_user)
+        self.user_lbl.setObjectName("UserName")
+        self.user_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        badge_layout.addWidget(self.user_lbl)
+        user_badge.setLayout(badge_layout)
+
+        self.pass_input = QLineEdit()
+        self.pass_input.setObjectName("PassInput")
+        self.pass_input.setPlaceholderText("Şifre (' ')")
+        self.pass_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.pass_input.returnPressed.connect(self.verify_and_login)
+
+        btn_layout = QHBoxLayout()
+        login_btn = QPushButton("Giriş Yap")
+        login_btn.setObjectName("LoginBtn")
+        login_btn.clicked.connect(self.verify_and_login)
+
+        switch_btn = QPushButton("Kullanıcı Değiştir")
+        switch_btn.setObjectName("SwitchUserBtn")
+        switch_btn.clicked.connect(self.toggle_user)
+
+        btn_layout.addWidget(login_btn)
+        btn_layout.addWidget(switch_btn)
+
+        card_layout.addWidget(self.clock)
+        card_layout.addWidget(user_badge)
+        card_layout.addWidget(self.pass_input)
+        card_layout.addLayout(btn_layout)
+        card.setLayout(card_layout)
+
+        layout.addWidget(card, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.setLayout(layout)
+
+        self.clock_timer = QTimer()
+        self.clock_timer.timeout.connect(self.update_time)
+        self.clock_timer.start(1000)
+
+    def update_time(self):
+        self.clock.setText(datetime.datetime.now().strftime("%H:%M"))
+
+    def toggle_user(self):
+        if "Admin" in self.current_user:
+            self.current_user = "Misafir"
+            self.target_password = ""
+        else:
+            self.current_user = "Kuzey (Admin)"
+            self.target_password = " "
+        self.user_lbl.setText(self.current_user)
+
+    def verify_and_login(self):
+        if self.pass_input.text() == self.target_password:
+            self.on_login_success()
+        else:
+            QMessageBox.warning(self, "Hata", "Hatalı Şifre!")
+
+
+class DesktopUI(QWidget):
+    def __init__(self, apps_dict, main_window):
+        super().__init__()
+        self.apps_dict = apps_dict
+        self.main_window = main_window
+        self.state_file = "savestate4.json"
+        self.app_manager = AppManager()
+
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 10)
+        main_layout.setSpacing(0)
+        self.setLayout(main_layout)
+
+        mac_bar = QFrame()
+        mac_bar.setObjectName("MacMenuBar")
+        bar_layout = QHBoxLayout()
+        bar_layout.setContentsMargins(8, 0, 8, 0)
+        bar_layout.setSpacing(2)
+
+        system_logo = QPushButton("[/]")
+        system_logo.setProperty("class", "MacLogoBtn")
+        system_logo.clicked.connect(self.show_system_menu)
+
+        app_title = QLabel("FlourescentOS")
+        app_title.setProperty("class", "MacAppName")
+
+        bar_layout.addWidget(system_logo)
+        bar_layout.addWidget(app_title)
+
+        # Gelişmiş Dinamik Menü Tanımları
+        menu_structure = {
+            "Dosya": ["Yeni Pencere Aç", "Dosya Aç...", "---", "Masaüstünü Kaydet", "---", "Pencereyi Kapat"],
+            "Düzen": ["Kes", "Kopyala", "Yapıştır", "Sil", "---", "Tümünü Seç"],
+            "Görünüm": ["Tam Ekran Yap", "Pencere Moduna Geç", "---", "Sistemi Yenile"],
+            "Git": ["Masaüstü Klasörü", "İndirilenler", "Uygulamalar", "Sistem Kök Klasörü"],
+            "Pencere": ["Simge Durumuna Küçült", "Büyüt", "---", "Tüm Pencereleri Öne Getir"],
+            "Yardım": ["FlourescentOS Yardım", "Kullanım Kılavuzu"]
+        }
+
+        for menu_title, items in menu_structure.items():
+            btn = QPushButton(menu_title)
+            btn.setProperty("class", "MacMenuItem")
+            btn.setMenu(self.create_sub_menu(items))
+            bar_layout.addWidget(btn)
+
+        bar_layout.addStretch()
+
+        self.icon_cam = QPushButton("📹")
+        self.icon_cam.setProperty("class", "MacMenuItem")
+        self.icon_cam.setMenu(self.create_sub_menu(["Kamera Etkin", "Kamera İzinleri"]))
+
+        self.icon_history = QPushButton("🕒")
+        self.icon_history.setProperty("class", "MacMenuItem")
+        self.icon_history.setMenu(self.create_sub_menu(["Son Etkinlikler", "Geçmişi Temizle"]))
+
+        self.icon_sound = QPushButton("🔊")
+        self.icon_sound.setProperty("class", "MacMenuItem")
+        self.icon_sound.setMenu(self.create_sub_menu(["Sesi Sessize Al", "Ses Çıkışı: Dahili Hoparlör"]))
+
+        self.status_time_lbl = QLabel()
+        self.status_time_lbl.setProperty("class", "MacStatusText")
+
+        self.icon_search = QPushButton("🔍")
+        self.icon_search.setProperty("class", "MacMenuItem")
+        self.icon_search.clicked.connect(self.show_spotlight_search)
+
+        self.icon_control = QPushButton("☰")
+        self.icon_control.setProperty("class", "MacMenuItem")
+        self.icon_control.setMenu(self.create_sub_menu(["Wi-Fi: Bağlı", "Bluetooth: Açık", "---", "Ayarlar..."]))
+
+        bar_layout.addWidget(self.icon_cam)
+        bar_layout.addWidget(self.icon_history)
+        bar_layout.addWidget(self.icon_sound)
+        bar_layout.addWidget(self.status_time_lbl)
+        bar_layout.addWidget(self.icon_search)
+        bar_layout.addWidget(self.icon_control)
+
+        mac_bar.setLayout(bar_layout)
+        main_layout.addWidget(mac_bar)
+
+        self.workspace = QStackedWidget()
+        main_layout.addWidget(self.workspace)
+
+        dock_container = QHBoxLayout()
+        dock_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        dock_panel = QFrame()
+        dock_panel.setObjectName("BigSurDock")
+        dock_layout = QHBoxLayout()
+        dock_layout.setContentsMargins(8, 4, 8, 4)
+        dock_layout.setSpacing(6)
+
+        start_btn = QPushButton("☀️")
+        start_btn.setProperty("class", "DockBtn")
+        dock_layout.addWidget(start_btn)
+
+        for name, widget_class in self.apps_dict.items():
+            btn = QPushButton(name)
+            btn.setProperty("class", "DockBtn")
+            btn.clicked.connect(lambda checked, w=widget_class, n=name:
+                                self.app_manager.open_app(n, w, self.workspace))
+            dock_layout.addWidget(btn)
+
+        task_btn = QPushButton("⚙️")
+        task_btn.setProperty("class", "DockBtn")
+        task_btn.clicked.connect(self.show_task_manager)
+        dock_layout.addWidget(task_btn)
+
+        dock_panel.setLayout(dock_layout)
+        dock_container.addWidget(dock_panel)
+        main_layout.addLayout(dock_container)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_status)
+        self.timer.start(1000)
+        self.update_status()
+
+        self.load_state()
+
+    def create_sub_menu(self, items):
+        menu = QMenu(self)
+        for item in items:
+            if item == "---":
+                menu.addSeparator()
+            else:
+                action = QAction(item, self)
+                action.triggered.connect(lambda checked, text=item: self.handle_menu_action(text))
+                menu.addAction(action)
+        return menu
+
+    def handle_menu_action(self, action_text):
+        # 1. DOSYA İŞLEMLERİ
+        if action_text == "Dosya Aç...":
+            file_path, _ = QFileDialog.getOpenFileName(self, "Bilgisayardan Dosya Seç", "", "Tüm Dosyalar (*)")
+            if file_path:
+                QMessageBox.information(self, "Dosya Seçildi", f"Açılan Dosya:\n{file_path}")
+        elif action_text == "Masaüstünü Kaydet":
+            self.save_state()
+            QMessageBox.information(self, "Sistem", "Masaüstü durumu başarıyla kaydedildi!")
+        elif action_text == "Pencereyi Kapat":
+            current_widget = self.workspace.currentWidget()
+            if current_widget:
+                self.workspace.removeWidget(current_widget)
+
+        # 2. DÜZEN İŞLEMLERİ (Metin Alanları ile Etkileşim)
+        elif action_text in ["Kes", "Kopyala", "Yapıştır", "Sil", "Tümünü Seç"]:
+            focused = QApplication.focusWidget()
+            if isinstance(focused, QLineEdit):
+                if action_text == "Kes": focused.cut()
+                elif action_text == "Kopyala": focused.copy()
+                elif action_text == "Yapıştır": focused.paste()
+                elif action_text == "Sil": focused.clear()
+                elif action_text == "Tümünü Seç": focused.selectAll()
+            else:
+                QMessageBox.warning(self, "Düzen", "Lütfen işlem yapmak için bir metin kutusu seçin.")
+
+        # 3. GÖRÜNÜM & PENCERE İŞLEMLERİ
+        elif action_text == "Tam Ekran Yap":
+            self.main_window.showFullScreen()
+        elif action_text in ["Pencere Moduna Geç", "Büyüt"]:
+            self.main_window.showNormal()
+        elif action_text == "Simge Durumuna Küçült":
+            self.main_window.showMinimized()
+        elif action_text == "Sistemi Yenile":
+            self.update_status()
+
+        # 4. GİT İŞLEMLERİ (PC Klasör Açma)
+        elif action_text in ["Masaüstü Klasörü", "İndirilenler", "Uygulamalar", "Sistem Kök Klasörü"]:
+            path = ""
+            if action_text == "Masaüstü Klasörü": path = os.path.expanduser("~/Desktop")
+            elif action_text == "İndirilenler": path = os.path.expanduser("~/Downloads")
+            elif action_text == "Uygulamalar": path = os.path.expanduser("~")
+            elif action_text == "Sistem Kök Klasörü": path = "/" if sys.platform != "win32" else "C:\\"
+            
+            if os.path.exists(path):
+                QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+
+        # 5. YARDIM İŞLEMLERİ
+        elif action_text in ["FlourescentOS Yardım", "Kullanım Kılavuzu"]:
+            help_text = (
+                "<b>FlourescentOS v5.0 Kullanım Kılavuzu</b><br><br>"
+                "• <b>Menü Çubuğu:</b> Gerçek bilgisayar dosyalarını açabilir veya sistem dizinlerine gidebilirsiniz.<br>"
+                "• <b>Kısayollar:</b> Metin kutularında Düzen menüsünden Kopyala/Yapıştır yapabilirsiniz.<br>"
+                "• <b>Dock:</b> Uygulamaları tek tıkla başlatabilirsiniz.<br>"
+                "• <b>Görev Yöneticisi:</b> Açık uygulamaları ⚙️ butonundan yönetebilirsiniz."
+            )
+            QMessageBox.information(self, "Kılavuz", help_text)
+
+    def show_spotlight_search(self):
+        query, ok = QInputDialog.getText(self, "🔍 Spotlight Arama", "Aranacak dosya veya uygulamayı girin:")
+        if ok and query:
+            QMessageBox.information(self, "Arama Sonucu", f"'{query}' için arama yapılıyor...")
+
+    def show_system_menu(self):
+        # Donanım Özelliklerini psutil İle Çekme
+        cpu_usage = psutil.cpu_percent()
+        ram = psutil.virtual_memory()
+        ram_used = round(ram.used / (1024**3), 2)
+        ram_total = round(ram.total / (1024**3), 2)
+
+        info_text = (
+            f"<b>FlourescentOS 5</b><br>"
+            f"Sürüm: 5.0.1 (Build 2026.08)<br>"
+            f"Grafik Motoru: PyQt6<br><br>"
+            f"<b>Sistem Donanım Özellikleri:</b><br>"
+            f"• İşlemci Yükü: %{cpu_usage}<br>"
+            f"• Bellek (RAM): {ram_used} GB / {ram_total} GB (%{ram.percent})<br>"
+            f"• Platform: {sys.platform.upper()}"
+        )
+        
+        menu = QMenu(self)
+        about_act = QAction("Bu Sistem Hakkında", self)
+        about_act.triggered.connect(lambda: QMessageBox.information(self, "Sistem Bilgisi", info_text))
+        
+        lock_act = QAction("Ekranı Kilitle", self)
+        restart_act = QAction("Yeniden Başlat...", self)
+        
+        menu.addAction(about_act)
+        menu.addSeparator()
+        menu.addAction(lock_act)
+        menu.addAction(restart_act)
+        
+        menu.exec(self.cursor().pos())
+
+    def show_task_manager(self):
+        tasks = self.app_manager.list_apps()
+        if not tasks:
+            QMessageBox.information(self, "Görev Yöneticisi", "Hiç uygulama açık değil")
+            return
+        app_name, ok = QInputDialog.getItem(self, "Görev Yöneticisi", "Uygulama seç:", tasks, 0, False)
+        if ok and app_name:
+            action, ok2 = QInputDialog.getItem(self, "İşlem Seç", "Ne yapmak istiyorsun?", ["Geçiş Yap", "Kapat"], 0, False)
+            if ok2:
+                if action == "Geçiş Yap": self.app_manager.switch_app(app_name, self.workspace)
+                elif action == "Kapat": self.app_manager.close_app(app_name, self.workspace)
+
+    def update_status(self):
+        now = datetime.datetime.now()
+        day_str = now.strftime("%a")
+        time_str = now.strftime("%I:%M %p").lower()
+        
+        battery_str = ""
+        try:
+            battery = psutil.sensors_battery()
+            if battery: battery_str = f" ⚡{int(battery.percent)}%"
+        except Exception:
+            pass
+
+        self.status_time_lbl.setText(f"{day_str} {time_str}{battery_str}")
+
+    def save_state(self, app_name=None):
+        state = {"current_app_name": app_name, "apps": {}}
+        for n, w in self.app_manager.opened_apps.items():
+            if hasattr(w, "save_state"):
+                state["apps"][n] = w.save_state()
+        with open(self.state_file, "w") as f:
+            json.dump(state, f)
+
+    def load_state(self):
+        if os.path.exists(self.state_file):
+            try:
+                with open(self.state_file, "r") as f:
+                    state = json.load(f)
+                for app_name, app_data in state.get("apps", {}).items():
+                    if app_name in self.apps_dict:
+                        self.app_manager.open_app(app_name, self.apps_dict[app_name], self.workspace)
+                        widget = self.app_manager.opened_apps[app_name]
+                        if hasattr(widget, "load_state"):
+                            widget.load_state(app_data)
+            except Exception:
+                pass
+
+
+class FlourescentOS5(QMainWindow):
+    def __init__(self, apps_dict):
+        super().__init__()
+        self.setWindowTitle("FlourescentOS 5")
+        self.resize(1280, 720)
+        self.setObjectName("MainBG")
+
+        self.root_stack = QStackedWidget()
+        self.setCentralWidget(self.root_stack)
+
+        self.boot_screen = BootScreen(self.show_lock)
+        self.lock_screen = LockScreen(self.show_desktop)
+        self.desktop_ui = DesktopUI(apps_dict, self)
+
+        self.root_stack.addWidget(self.boot_screen)
+        self.root_stack.addWidget(self.lock_screen)
+        self.root_stack.addWidget(self.desktop_ui)
+
+    def show_lock(self):
+        self.root_stack.setCurrentIndex(1)
+
+    def show_desktop(self):
+        self.root_stack.setCurrentIndex(2)
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    app.setStyleSheet(GLOBAL_STYLESHEET)
+
+    apps_dict = {
+          "📝": Texter,
+        "💳": Biller,
+        "📒": Notes,
+        "📧": EmailClient,
+        "📖": Dictionary,
+        "🌍": Translator,
+        "☁️": Weather,
+        "📰": NewsReader,
+        "🗺": Maps,
+        "🌐": Browser,
+        "🎵": MusicPlayer,
+        "📆": CalendarApp,
+        "📓": Notepad,
+        "🖼️": Gallery,
+        "🎨": PaintApp,
+        "🧮": Calculator,
+        "🎞": VideoPlayer,
+        "💬": ChatClient,
+        "🎮": GameHub,
+        "🎹": MusicStudio,
+        "🖼": PhotoEditor,
+        "RUN": AppRunner,
+
+        # Backbone apps
+        "🗂": FileManager,
+        "💻": TerminalEmulator,
+        "📦": PackageManager,
+        "📜": ScriptRunner,
+        "⚙️": ControlPanel,
+        "📊": SystemMonitor,
+        "🛒": FlourescentMarket,
+        "📦": BackupRestore,
+        "🔄": UpdateManager,
+        "🔔": NotificationCenter,
+        "👤": UserManager, 
+    }
+
+    window = FlourescentOS5(apps_dict)
+    window.show()
+    sys.exit(app.exec())

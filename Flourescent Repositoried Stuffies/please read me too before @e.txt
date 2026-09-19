@@ -1,0 +1,7 @@
+Instructions
+Download VSCode 
+open folder 
+choose this folder
+import libs vis try and see that thing(no module named Python_Lib)
+download it via(pip install python_lib)
+and try until it Works :)

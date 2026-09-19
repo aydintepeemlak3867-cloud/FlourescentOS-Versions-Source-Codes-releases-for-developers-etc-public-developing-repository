@@ -1,0 +1,51 @@
+import sys
+import winsound
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QSlider, QPushButton
+from PyQt6.QtCore import Qt
+
+class SynthApp(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Analog Synth Console")
+        self.resize(300, 200)
+
+        layout = QVBoxLayout()
+
+        self.label_freq = QLabel("Frequency (Hz): 440")
+        layout.addWidget(self.label_freq)
+        self.slider_freq = QSlider(Qt.Orientation.Horizontal)
+        self.slider_freq.setRange(50, 2000)
+        self.slider_freq.setValue(440)
+        self.slider_freq.valueChanged.connect(self.update_freq)
+        layout.addWidget(self.slider_freq)
+
+        self.label_dur = QLabel("Duration (ms): 200")
+        layout.addWidget(self.label_dur)
+        self.slider_dur = QSlider(Qt.Orientation.Horizontal)
+        self.slider_dur.setRange(50, 1000)
+        self.slider_dur.setValue(200)
+        self.slider_dur.valueChanged.connect(self.update_dur)
+        layout.addWidget(self.slider_dur)
+
+        self.button = QPushButton("Play Sound")
+        self.button.clicked.connect(self.play_sound)
+        layout.addWidget(self.button)
+
+        self.setLayout(layout)
+
+    def update_freq(self, value):
+        self.label_freq.setText(f"Frequency (Hz): {value}")
+
+    def update_dur(self, value):
+        self.label_dur.setText(f"Duration (ms): {value}")
+
+    def play_sound(self):
+        freq = self.slider_freq.value()
+        dur = self.slider_dur.value()
+        winsound.Beep(freq, dur)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = SynthApp()
+    window.show()
+    sys.exit(app.exec())

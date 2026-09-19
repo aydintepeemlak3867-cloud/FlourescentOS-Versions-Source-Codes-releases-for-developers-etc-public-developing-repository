@@ -1,0 +1,28 @@
+import sys
+import platform
+
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
+
+class App(QWidget):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        layout = QVBoxLayout(self)
+
+        title = QLabel("🖥 System Info")
+        title.setStyleSheet(
+            "font-size:24px;font-weight:bold;"
+        )
+
+        layout.addWidget(title)
+
+        info = QLabel(
+            f"Python: {sys.version.split()[0]}\\n"
+            f"Platform: {platform.platform()}\\n"
+            f"Machine: {platform.machine()}"
+        )
+
+        layout.addWidget(info)
+
+        layout.addStretch()

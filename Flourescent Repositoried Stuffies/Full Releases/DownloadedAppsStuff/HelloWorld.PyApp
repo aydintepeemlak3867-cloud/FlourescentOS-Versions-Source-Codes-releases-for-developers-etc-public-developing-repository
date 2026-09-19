@@ -1,0 +1,34 @@
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
+
+class App(QWidget):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        layout = QVBoxLayout(self)
+
+        title = QLabel("🚀 Hello World")
+        title.setStyleSheet(
+            "font-size:26px;font-weight:bold;"
+        )
+
+        layout.addWidget(title)
+
+        info = QLabel(
+            "Bu uygulama FlourescentOS Desktop "
+            "içinde widget olarak çalışıyor."
+        )
+
+        layout.addWidget(info)
+
+        button = QPushButton("👋 Merhaba!")
+
+        button.clicked.connect(
+            lambda: info.setText(
+                "Çalışıyor! 🎉"
+            )
+        )
+
+        layout.addWidget(button)
+
+        layout.addStretch()
